@@ -275,12 +275,14 @@ public class MainActivity extends AppCompatActivity {
                 tvCurrentHost.setVisibility(View.GONE);
             }
             btnToggleDns.setText("Turn OFF Private DNS");
+            btnToggleDns.setIconResource(R.drawable.ic_dns_tile_on);
         } else {
             tvStatusBadge.setText(R.string.status_inactive);
             setBadgeColor(tvStatusBadge, Color.parseColor("#757575")); // Gray
             tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_status_off)));
             tvCurrentHost.setVisibility(View.GONE);
             btnToggleDns.setText("Turn ON Private DNS");
+            btnToggleDns.setIconResource(R.drawable.ic_dns_tile_off);
         }
 
         btnToggleDns.setEnabled(hasPerm);
