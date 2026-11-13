@@ -43,7 +43,7 @@ public class DnsManager {
     public static final int BEHAVIOR_CYCLE_ALL = 2;    // Hostname -> Auto -> Off -> Hostname
 
     // Default Provider
-    public static final String DEFAULT_HOSTNAME = "dns.adguard-dns.com";
+    public static final String DEFAULT_HOSTNAME = "dns.adguard.com";
 
     private final Context appContext;
     private final SharedPreferences prefs;

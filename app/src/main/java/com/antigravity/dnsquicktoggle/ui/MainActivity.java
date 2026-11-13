@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupPresets() {
-        chipAdGuard.setOnClickListener(v -> selectPreset("dns.adguard-dns.com"));
+        chipAdGuard.setOnClickListener(v -> selectPreset("dns.adguard.com"));
         chipCloudflare.setOnClickListener(v -> selectPreset("1dot1dot1dot1.cloudflare-dns.com"));
         chipGoogle.setOnClickListener(v -> selectPreset("dns.google"));
         chipQuad9.setOnClickListener(v -> selectPreset("dns.quad9.net"));

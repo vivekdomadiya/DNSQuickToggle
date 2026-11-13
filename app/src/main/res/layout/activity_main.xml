@@ -100,7 +100,7 @@
                         android:layout_marginTop="4dp"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorPrimary"
-                        tools:text="Provider: dns.adguard-dns.com" />
+                        tools:text="Provider: dns.adguard.com" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnToggleDns"

@@ -83,10 +83,9 @@ public class DnsTileService extends TileService {
             dnsManager = new DnsManager(this);
         }
 
-        tile.setLabel(getString(R.string.tile_label));
-
         if (!dnsManager.hasPermission()) {
             tile.setState(Tile.STATE_INACTIVE);
+            tile.setLabel(getString(R.string.tile_permission_needed));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 tile.setSubtitle(getString(R.string.tile_permission_needed));
             }
@@ -103,6 +102,12 @@ public class DnsTileService extends TileService {
                 if (TextUtils.isEmpty(host)) {
                     host = dnsManager.getSavedHostname();
                 }
+                // When ON, display the active DNS hostname as the tile label
+                if (!TextUtils.isEmpty(host)) {
+                    tile.setLabel(host);
+                } else {
+                    tile.setLabel(getString(R.string.tile_label));
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.setSubtitle(host);
                 }
@@ -111,6 +116,7 @@ public class DnsTileService extends TileService {
 
             case DnsManager.MODE_OPPORTUNISTIC:
                 tile.setState(Tile.STATE_ACTIVE);
+                tile.setLabel(getString(R.string.dns_mode_auto));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.setSubtitle(getString(R.string.dns_mode_auto));
                 }
@@ -120,6 +126,7 @@ public class DnsTileService extends TileService {
             case DnsManager.MODE_OFF:
             default:
                 tile.setState(Tile.STATE_INACTIVE);
+                tile.setLabel(getString(R.string.tile_label));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.setSubtitle(getString(R.string.dns_status_off));
                 }

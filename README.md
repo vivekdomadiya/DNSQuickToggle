@@ -8,7 +8,7 @@
 
 - **⚡ Quick Settings Tile (`DnsTileService`)**:
   - Direct 1-tap toggle from your notification shade.
-  - Live status indicator: Displays active DNS provider hostname (e.g. `dns.adguard-dns.com`) or `Off` in the tile subtitle.
+  - Live status indicator: Displays active DNS provider hostname (e.g. `dns.adguard.com`) or `Off` in the tile subtitle.
   - Custom vector icons for active vs. inactive states.
   - Automatically collapses shade and prompts if permissions are missing.
 
@@ -16,7 +16,7 @@
   - Automatically updates the Quick Tile and Dashboard whenever Private DNS settings are changed in Android System Settings or by another app.
 
 - **🛡️ Popular DNS Provider Presets**:
-  - **AdGuard DNS** (`dns.adguard-dns.com`): Blocks ads and tracking domains system-wide.
+  - **AdGuard DNS** (`dns.adguard.com`): Blocks ads and tracking domains system-wide.
   - **Cloudflare 1.1.1.1** (`1dot1dot1dot1.cloudflare-dns.com`): High speed and privacy.
   - **Google DNS** (`dns.google`): Reliable global DNS.
   - **Quad9** (`dns.quad9.net`): Blocks malicious domains and phishing.
