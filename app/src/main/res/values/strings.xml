@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">DNS Quick Toggle</string>
+    <string name="tile_label">Private DNS</string>
+    <string name="tile_permission_needed">Grant permission</string>
+    <string name="dns_status_off">Off</string>
+    <string name="dns_mode_auto">Automatic</string>
+    <string name="dns_mode_hostname">Private Provider</string>
+
+    <string name="status_title">Current DNS Status</string>
+    <string name="status_active">ACTIVE</string>
+    <string name="status_inactive">DISABLED</string>
+    <string name="mode_label">Mode: %1$s</string>
+    <string name="host_label">Provider: %1$s</string>
+    <string name="btn_toggle_dns">Toggle DNS</string>
+
+    <string name="permission_title">System Permission Status</string>
+    <string name="permission_granted">WRITE_SECURE_SETTINGS Granted</string>
+    <string name="permission_granted_desc">All permissions are active. The Quick Settings tile can switch DNS modes instantly.</string>
+    <string name="permission_missing">Permission Required</string>
+    <string name="permission_missing_desc">Android requires WRITE_SECURE_SETTINGS to change system Private DNS. Grant it via Root or ADB below.</string>
+    <string name="permission_required_toast">WRITE_SECURE_SETTINGS permission required</string>
+    
+    <string name="btn_grant_root">Grant with Root (su)</string>
+    <string name="btn_copy_adb">Copy ADB Command</string>
+    <string name="btn_refresh_perm">Refresh Status</string>
+    <string name="root_success_toast">Permission granted successfully via Root!</string>
+    <string name="root_failed_toast">Root grant failed or su not available.</string>
+    <string name="adb_copied_toast">ADB command copied to clipboard!</string>
+
+    <string name="qs_tile_card_title">Quick Settings Tile</string>
+    <string name="btn_add_qs_tile">Add Tile to Quick Settings</string>
+    <string name="qs_tile_guide">To add the tile manually:\n1. Pull down the status bar twice to reveal Quick Settings.\n2. Tap the pencil (Edit) icon.\n3. Scroll down and drag \'Private DNS\' to your active tiles.</string>
+    <string name="tile_added_success">Private DNS tile added to Quick Settings!</string>
+    <string name="tile_already_added">Private DNS tile is already in your Quick Settings.</string>
+
+    <string name="config_title">DNS Provider Configuration</string>
+    <string name="preset_intro">Select a popular DNS provider preset or enter a custom one:</string>
+    <string name="preset_adguard">AdGuard (Adblock)</string>
+    <string name="preset_cloudflare">Cloudflare (1.1.1.1)</string>
+    <string name="preset_google">Google DNS</string>
+    <string name="preset_quad9">Quad9 (Security)</string>
+    <string name="preset_mullvad">Mullvad (Privacy)</string>
+    <string name="custom_host_hint">Custom DNS hostname (e.g. xxx.dns.nextdns.io)</string>
+    <string name="btn_save_host">Save Hostname</string>
+    <string name="host_saved_toast">DNS hostname saved!</string>
+    <string name="host_invalid_toast">Please enter a valid DNS hostname.</string>
+
+    <string name="behavior_title">Toggle Behavior</string>
+    <string name="behavior_hostname_off">Provider ↔ Off (Recommended)</string>
+    <string name="behavior_auto_off">Automatic ↔ Off</string>
+    <string name="behavior_cycle_all">Cycle (Provider → Auto → Off)</string>
+
+    <string name="adb_command_text">adb shell pm grant com.antigravity.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS</string>
+</resources>
