@@ -28,9 +28,10 @@ if [ -d "/sdcard/Download" ] || [ -d "/storage/emulated/0/Download" ]; then
     DEST_DIR="/sdcard/Download"
     [ ! -d "$DEST_DIR" ] && DEST_DIR="/storage/emulated/0/Download"
     APK_BASENAME=$(basename "$APK_PATH")
+    # Clean up previous unversioned file if present
+    rm -f "$DEST_DIR/DNSQuickToggle.apk"
     cp "$APK_PATH" "$DEST_DIR/$APK_BASENAME"
-    cp "$APK_PATH" "$DEST_DIR/DNSQuickToggle.apk"
-    echo "[+] Copied APK to $DEST_DIR/$APK_BASENAME and $DEST_DIR/DNSQuickToggle.apk"
+    echo "[+] Copied APK to $DEST_DIR/$APK_BASENAME"
     echo "    You can open your Downloads folder and tap $APK_BASENAME to install!"
 fi
 
