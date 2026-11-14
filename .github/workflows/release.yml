@@ -18,12 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -73,13 +75,28 @@ jobs:
               --generate-notes
           fi
 
-      - name: Bump Version Code & Name
-        id: bump
+      - name: Bump Version Code & Name via PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 .github/scripts/bump-version.py --type patch
 
+          NEW_VERSION=$(grep "versionName" app/build.gradle | head -n 1 | awk -F "['\"]" '{print $2}')
+          NEW_VERSION_CODE=$(grep "versionCode" app/build.gradle | head -n 1 | awk '{print $2}')
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BUMP_BRANCH="chore/bump-version-${NEW_VERSION}"
+          git checkout -b "$BUMP_BRANCH"
           git add app/build.gradle
-          git commit -m "chore(release): bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
-          git push origin master
+          git commit -m "chore(release): bump version to ${NEW_VERSION} [skip ci]"
+          git push origin "$BUMP_BRANCH"
+
+          gh pr create \
+            --base master \
+            --head "$BUMP_BRANCH" \
+            --title "chore(release): bump version to ${NEW_VERSION} [skip ci]" \
+            --body "Automated version bump to ${NEW_VERSION} (code: ${NEW_VERSION_CODE}) after release."
+
+          gh pr merge "$BUMP_BRANCH" --squash --delete-branch
