@@ -1,4 +1,4 @@
-package com.antigravity.dnsquicktoggle.ui;
+package com.vivekdomadiya.dnsquicktoggle.ui;
 
 import android.app.StatusBarManager;
 import android.content.ClipData;
@@ -31,10 +31,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.antigravity.dnsquicktoggle.R;
-import com.antigravity.dnsquicktoggle.model.DnsProvider;
-import com.antigravity.dnsquicktoggle.service.DnsTileService;
-import com.antigravity.dnsquicktoggle.util.DnsManager;
+import com.vivekdomadiya.dnsquicktoggle.R;
+import com.vivekdomadiya.dnsquicktoggle.model.DnsProvider;
+import com.vivekdomadiya.dnsquicktoggle.service.DnsTileService;
+import com.vivekdomadiya.dnsquicktoggle.util.DnsManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;

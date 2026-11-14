@@ -1,4 +1,4 @@
-package com.antigravity.dnsquicktoggle.service;
+package com.vivekdomadiya.dnsquicktoggle.service;
 
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -17,10 +17,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import com.antigravity.dnsquicktoggle.R;
-import com.antigravity.dnsquicktoggle.model.DnsProvider;
-import com.antigravity.dnsquicktoggle.ui.MainActivity;
-import com.antigravity.dnsquicktoggle.util.DnsManager;
+import com.vivekdomadiya.dnsquicktoggle.R;
+import com.vivekdomadiya.dnsquicktoggle.model.DnsProvider;
+import com.vivekdomadiya.dnsquicktoggle.ui.MainActivity;
+import com.vivekdomadiya.dnsquicktoggle.util.DnsManager;
 
 public class DnsTileService extends TileService {
     private static final String TAG = "DnsTileService";

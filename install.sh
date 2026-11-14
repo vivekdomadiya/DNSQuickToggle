@@ -21,7 +21,7 @@ else
     exit 1
 fi
 
-PACKAGE_NAME="com.antigravity.dnsquicktoggle"
+PACKAGE_NAME="com.vivekdomadiya.dnsquicktoggle"
 
 # Check if /sdcard/Download exists (Android local storage)
 if [ -d "/sdcard/Download" ] || [ -d "/storage/emulated/0/Download" ]; then
@@ -40,7 +40,8 @@ if command -v adb >/dev/null 2>&1; then
     DEVICES=$(adb devices 2>/dev/null | grep -v "List" | grep "device$" || true)
     if [ -n "$DEVICES" ]; then
         echo "[*] Device detected via ADB. Installing..."
-        adb install -r "$APK_PATH"
+        adb shell settings put global verifier_verify_adb_installs 0 2>/dev/null || true
+        adb install -r -d -t "$APK_PATH"
         echo "[*] Granting WRITE_SECURE_SETTINGS permission via ADB..."
         adb shell pm grant "$PACKAGE_NAME" android.permission.WRITE_SECURE_SETTINGS
         echo "[+] Permission granted! You are ready to toggle Private DNS."

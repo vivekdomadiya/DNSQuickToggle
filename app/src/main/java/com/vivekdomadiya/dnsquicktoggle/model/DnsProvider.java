@@ -1,4 +1,4 @@
-package com.antigravity.dnsquicktoggle.model;
+package com.vivekdomadiya.dnsquicktoggle.model;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

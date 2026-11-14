@@ -1,4 +1,4 @@
-package com.antigravity.dnsquicktoggle.util;
+package com.vivekdomadiya.dnsquicktoggle.util;
 
 import android.Manifest;
 import android.content.ComponentName;
@@ -14,8 +14,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.antigravity.dnsquicktoggle.model.DnsProvider;
-import com.antigravity.dnsquicktoggle.service.DnsTileService;
+import com.vivekdomadiya.dnsquicktoggle.model.DnsProvider;
+import com.vivekdomadiya.dnsquicktoggle.service.DnsTileService;
 
 import org.json.JSONArray;
 import org.json.JSONException;

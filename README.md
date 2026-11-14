@@ -50,7 +50,7 @@ If your phone is rooted (Magisk / KernelSU / APatch):
 #### Method 2: Via ADB (From PC or Termux with wireless debugging)
 Run the following command:
 ```bash
-adb shell pm grant com.antigravity.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
+adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
 ```
 
 ---
@@ -89,7 +89,7 @@ dns-quick-toggle/
 ├── app/
 │   ├── src/main/
 │   │   ├── AndroidManifest.xml
-│   │   ├── java/com/antigravity/dnsquicktoggle/
+│   │   ├── java/com/vivekdomadiya/dnsquicktoggle/
 │   │   │   ├── model/
 │   │   │   ├── service/
 │   │   │   │   └── DnsTileService.java       # Quick Settings Tile service

@@ -1,4 +1,4 @@
-package com.antigravity.dnsquicktoggle.ui;
+package com.vivekdomadiya.dnsquicktoggle.ui;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -13,8 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.antigravity.dnsquicktoggle.R;
-import com.antigravity.dnsquicktoggle.model.DnsProvider;
+import com.vivekdomadiya.dnsquicktoggle.R;
+import com.vivekdomadiya.dnsquicktoggle.model.DnsProvider;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 
