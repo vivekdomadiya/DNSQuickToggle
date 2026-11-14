@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     private MaterialButton btnCopyAdb;
     private MaterialButton btnGrantRoot;
     private MaterialButton btnRefreshPerm;
+    private MaterialButton btnOpenGuide;
 
     // Status Card
     private TextView tvStatusBadge;
@@ -121,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
         btnCopyAdb = findViewById(R.id.btnCopyAdb);
         btnGrantRoot = findViewById(R.id.btnGrantRoot);
         btnRefreshPerm = findViewById(R.id.btnRefreshPerm);
+        btnOpenGuide = findViewById(R.id.btnOpenGuide);
 
         tvStatusBadge = findViewById(R.id.tvStatusBadge);
         tvCurrentMode = findViewById(R.id.tvCurrentMode);
@@ -165,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
 
         btnAddDns.setOnClickListener(v -> showAddDnsDialog());
         btnAddTile.setOnClickListener(v -> handleAddQuickTile());
+        btnOpenGuide.setOnClickListener(v -> openGuideUrl());
 
         btnCopyAdb.setOnClickListener(v -> {
             String command = tvAdbCommand.getText().toString();
@@ -448,6 +451,18 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
         }
         // Fallback for older versions
         showToast(R.string.qs_tile_guide);
+    }
+
+    private void openGuideUrl() {
+        try {
+            android.content.Intent intent = new android.content.Intent(
+                    android.content.Intent.ACTION_VIEW,
+                    Uri.parse(getString(R.string.github_guide_url))
+            );
+            startActivity(intent);
+        } catch (Exception e) {
+            showToast("Unable to open browser");
+        }
     }
 
     private void refreshUI() {
