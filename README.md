@@ -47,11 +47,33 @@ If your phone is rooted (Magisk / KernelSU / APatch):
 2. Tap **Grant with Root (su)**.
 3. Grant root privileges when prompted.
 
-#### Method 2: Via ADB (From PC or Termux with wireless debugging)
-Run the following command:
-```bash
-adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
-```
+#### Method 2: Via ADB (PC / Mac / Linux)
+For the app to work properly, you'll need to provide it permissions via ADB:
+
+1. **Download Platform Tools**: Get the official Android SDK Platform-Tools from Google [here](https://developer.android.com/tools/releases/platform-tools).
+2. **Extract & Open Terminal**:
+   - Extract the downloaded zip file.
+   - Open a terminal / command prompt inside the extracted `platform-tools` folder:
+     - **Windows**: Hold <kbd>Shift</kbd>, right-click inside the folder, and select *Open in Terminal* or *Open PowerShell window here*.
+     - **macOS / Linux**: Open Terminal and run `cd /path/to/platform-tools`.
+3. **Turn on USB Debugging on your phone**:
+   - Go to **Settings** &rarr; **About phone** and tap **Build number** 7 times to unlock Developer options.
+   - Go to **Settings** &rarr; **System** &rarr; **Developer options** and enable **USB debugging**.
+   - *(Note for Xiaomi / MIUI / HyperOS users: You must also enable **USB debugging (Security settings)**).*
+4. **Connect your phone to your PC** using a USB cable (and tap *Allow* on the authorization popup on your phone).
+5. **Run this command in the terminal**:
+
+   **Windows:**
+   ```cmd
+   adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
+   ```
+
+   **macOS / Linux:**
+   ```bash
+   ./adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
+   ```
+
+6. That's it! The permission will be granted immediately without needing a reboot.
 
 ---
 
@@ -62,14 +84,14 @@ From this directory, run:
 ```bash
 ./install.sh
 ```
-This builds the APK and automatically copies it to `/sdcard/Download/DNSQuickToggle.apk` (or installs via ADB / Root if connected).
+This builds the APK and automatically copies it to `/sdcard/Download/DNSQuickToggle.<version>.apk` (or installs via ADB / Root if connected).
 
 ### Manual Build
 ```bash
 ./gradlew assembleDebug
 ```
 The resulting APK is generated at:
-`app/build/outputs/apk/debug/app-debug.apk`
+`app/build/outputs/apk/debug/DNSQuickToggle.<version>.apk`
 
 ---
 

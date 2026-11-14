@@ -30,7 +30,7 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "DNSQuickToggle.${variant.versionName}.apk"
+            outputFileName = "${rootProject.name}.${variant.versionName}.apk"
         }
     }
 
