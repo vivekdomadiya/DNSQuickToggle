@@ -61,14 +61,19 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           retention-days: 30
 
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version_info.outputs.tag }}
-          name: "DNS Quick Toggle ${{ steps.version_info.outputs.tag }}"
-          files: app/build/outputs/apk/release/*.apk
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+      - name: Publish GitHub Release (Native gh CLI)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version_info.outputs.tag }}"
+          APK_FILE=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. Updating asset..."
+            gh release upload "$TAG" "$APK_FILE" --clobber
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" "$APK_FILE" \
+              --title "DNS Quick Toggle $TAG" \
+              --generate-notes
+          fi
