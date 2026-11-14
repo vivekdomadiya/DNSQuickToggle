@@ -63,15 +63,10 @@ For the app to work properly, you'll need to provide it permissions via ADB:
 4. **Connect your phone to your PC** using a USB cable (and tap *Allow* on the authorization popup on your phone).
 5. **Run this command in the terminal**:
 
-   **Windows:**
-   ```cmd
+   ```bash
    adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
    ```
-
-   **macOS / Linux:**
-   ```bash
-   ./adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
-   ```
+   *(Note: On macOS or Linux, use `./adb` if platform-tools is not in your system PATH).*
 
 6. That's it! The permission will be granted immediately without needing a reboot.
 
