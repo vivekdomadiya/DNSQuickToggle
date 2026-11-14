@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 concurrency:
@@ -42,13 +40,8 @@ jobs:
       - name: Determine Version & Tag
         id: version_info
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            TAG="${{ github.ref_name }}"
-            VERSION="${TAG#v}"
-          else
-            VERSION=$(grep "versionName" app/build.gradle | head -n 1 | awk -F "['\"]" '{print $2}')
-            TAG="v${VERSION}"
-          fi
+          VERSION=$(grep "versionName" app/build.gradle | head -n 1 | awk -F "['\"]" '{print $2}')
+          TAG="v${VERSION}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Release Tag: ${TAG} (Version: ${VERSION})"
