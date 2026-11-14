@@ -35,6 +35,7 @@ public class DnsManager {
     // App Preferences
     private static final String PREFS_NAME = "dns_toggle_prefs";
     public static final String PREF_CUSTOM_HOSTNAME = "custom_hostname";
+    public static final String PREF_PROVIDER_LABEL = "provider_label";
     public static final String PREF_TOGGLE_BEHAVIOR = "toggle_behavior";
 
     // Toggle behaviors
@@ -44,6 +45,7 @@ public class DnsManager {
 
     // Default Provider
     public static final String DEFAULT_HOSTNAME = "dns.adguard.com";
+    public static final String DEFAULT_LABEL = "AdGuard";
 
     private final Context appContext;
     private final SharedPreferences prefs;
@@ -122,6 +124,59 @@ public class DnsManager {
      */
     public void saveHostname(@NonNull String hostname) {
         prefs.edit().putString(PREF_CUSTOM_HOSTNAME, hostname.trim()).apply();
+    }
+
+    /**
+     * Gets the friendly label for the active/target DNS provider.
+     */
+    @NonNull
+    public String getSavedLabel() {
+        String saved = prefs.getString(PREF_PROVIDER_LABEL, null);
+        if (TextUtils.isEmpty(saved)) {
+            return inferLabelFromHostname(getSavedHostname());
+        }
+        return saved;
+    }
+
+    /**
+     * Saves user preferred label for the Quick Settings tile.
+     */
+    public void saveLabel(@NonNull String label) {
+        prefs.edit().putString(PREF_PROVIDER_LABEL, label.trim()).apply();
+    }
+
+    /**
+     * Saves both provider label and hostname.
+     */
+    public void saveProvider(@NonNull String label, @NonNull String hostname) {
+        prefs.edit()
+                .putString(PREF_PROVIDER_LABEL, label.trim())
+                .putString(PREF_CUSTOM_HOSTNAME, hostname.trim())
+                .apply();
+    }
+
+    /**
+     * Infers a friendly label from a hostname when no label has been saved.
+     */
+    @NonNull
+    public static String inferLabelFromHostname(@Nullable String hostname) {
+        if (TextUtils.isEmpty(hostname)) {
+            return DEFAULT_LABEL;
+        }
+        String lower = hostname.toLowerCase();
+        if (lower.contains("adguard")) return "AdGuard";
+        if (lower.contains("cloudflare") || lower.contains("1dot1dot1dot1") || lower.contains("one.one")) return "Cloudflare";
+        if (lower.contains("google")) return "Google";
+        if (lower.contains("quad9")) return "Quad9";
+        if (lower.contains("mullvad")) return "Mullvad";
+        if (lower.contains("nextdns")) return "NextDNS";
+        if (lower.contains("controld")) return "ControlD";
+
+        String[] parts = hostname.split("\\.");
+        if (parts.length > 0 && !TextUtils.isEmpty(parts[0])) {
+            return parts[0].substring(0, 1).toUpperCase() + parts[0].substring(1);
+        }
+        return hostname;
     }
 
     /**

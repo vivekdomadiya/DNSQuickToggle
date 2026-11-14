@@ -40,10 +40,15 @@
     <string name="preset_google">Google DNS</string>
     <string name="preset_quad9">Quad9 (Security)</string>
     <string name="preset_mullvad">Mullvad (Privacy)</string>
-    <string name="custom_host_hint">Custom DNS hostname (e.g. xxx.dns.nextdns.io)</string>
-    <string name="btn_save_host">Save Hostname</string>
-    <string name="host_saved_toast">DNS hostname saved!</string>
+    <string name="provider_label_hint">Tile Label (e.g. AdGuard, NextDNS)</string>
+    <string name="provider_label_helper">This name will appear on your Quick Settings tile when active</string>
+    <string name="custom_host_hint">DNS Hostname (e.g. dns.adguard.com)</string>
+    <string name="btn_save_host">Save Provider</string>
+    <string name="host_saved_toast">Provider configuration saved!</string>
     <string name="host_invalid_toast">Please enter a valid DNS hostname.</string>
+    <string name="label_invalid_toast">Please enter a label for the tile.</string>
+    <string name="label_display">Tile Label: %1$s</string>
+    <string name="hostname_display">Hostname: %1$s</string>
 
     <string name="behavior_title">Toggle Behavior</string>
     <string name="behavior_hostname_off">Provider ↔ Off (Recommended)</string>

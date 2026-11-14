@@ -102,12 +102,12 @@ public class DnsTileService extends TileService {
                 if (TextUtils.isEmpty(host)) {
                     host = dnsManager.getSavedHostname();
                 }
-                // When ON, display the active DNS hostname as the tile label
-                if (!TextUtils.isEmpty(host)) {
-                    tile.setLabel(host);
-                } else {
-                    tile.setLabel(getString(R.string.tile_label));
+                // When ON, display the saved provider label on the quick tile
+                String label = dnsManager.getSavedLabel();
+                if (TextUtils.isEmpty(label)) {
+                    label = DnsManager.inferLabelFromHostname(host);
                 }
+                tile.setLabel(label);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.setSubtitle(host);
                 }

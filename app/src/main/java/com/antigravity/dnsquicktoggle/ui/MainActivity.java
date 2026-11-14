@@ -30,6 +30,7 @@ import com.antigravity.dnsquicktoggle.R;
 import com.antigravity.dnsquicktoggle.service.DnsTileService;
 import com.antigravity.dnsquicktoggle.util.DnsManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
@@ -46,11 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private ContentObserver contentObserver;
 
     // UI references
-    private TextView tvStatusBadge;
-    private TextView tvCurrentMode;
-    private TextView tvCurrentHost;
-    private MaterialButton btnToggleDns;
-
+    private MaterialCardView cardPermission;
     private ImageView ivPermIcon;
     private TextView tvPermTitle;
     private TextView tvPermDesc;
@@ -59,6 +56,12 @@ public class MainActivity extends AppCompatActivity {
     private MaterialButton btnCopyAdb;
     private MaterialButton btnGrantRoot;
     private MaterialButton btnRefreshPerm;
+
+    private TextView tvStatusBadge;
+    private TextView tvCurrentMode;
+    private TextView tvCurrentLabel;
+    private TextView tvCurrentHost;
+    private MaterialButton btnToggleDns;
 
     private MaterialButton btnAddTile;
 
@@ -69,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private Chip chipQuad9;
     private Chip chipMullvad;
 
+    private TextInputLayout tilProviderLabel;
+    private TextInputEditText etProviderLabel;
     private TextInputLayout tilHostname;
     private TextInputEditText etHostname;
     private MaterialButton btnSaveHost;
@@ -89,11 +94,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        tvStatusBadge = findViewById(R.id.tvStatusBadge);
-        tvCurrentMode = findViewById(R.id.tvCurrentMode);
-        tvCurrentHost = findViewById(R.id.tvCurrentHost);
-        btnToggleDns = findViewById(R.id.btnToggleDns);
-
+        cardPermission = findViewById(R.id.cardPermission);
         ivPermIcon = findViewById(R.id.ivPermIcon);
         tvPermTitle = findViewById(R.id.tvPermTitle);
         tvPermDesc = findViewById(R.id.tvPermDesc);
@@ -102,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
         btnCopyAdb = findViewById(R.id.btnCopyAdb);
         btnGrantRoot = findViewById(R.id.btnGrantRoot);
         btnRefreshPerm = findViewById(R.id.btnRefreshPerm);
+
+        tvStatusBadge = findViewById(R.id.tvStatusBadge);
+        tvCurrentMode = findViewById(R.id.tvCurrentMode);
+        tvCurrentLabel = findViewById(R.id.tvCurrentLabel);
+        tvCurrentHost = findViewById(R.id.tvCurrentHost);
+        btnToggleDns = findViewById(R.id.btnToggleDns);
 
         btnAddTile = findViewById(R.id.btnAddTile);
 
@@ -112,15 +119,17 @@ public class MainActivity extends AppCompatActivity {
         chipQuad9 = findViewById(R.id.chipQuad9);
         chipMullvad = findViewById(R.id.chipMullvad);
 
+        tilProviderLabel = findViewById(R.id.tilProviderLabel);
+        etProviderLabel = findViewById(R.id.etProviderLabel);
         tilHostname = findViewById(R.id.tilHostname);
         etHostname = findViewById(R.id.etHostname);
         btnSaveHost = findViewById(R.id.btnSaveHost);
 
         rgBehavior = findViewById(R.id.rgBehavior);
 
-        // Prepopulate saved hostname
-        String savedHost = dnsManager.getSavedHostname();
-        etHostname.setText(savedHost);
+        // Prepopulate saved label and hostname
+        etProviderLabel.setText(dnsManager.getSavedLabel());
+        etHostname.setText(dnsManager.getSavedHostname());
     }
 
     private void setupListeners() {
@@ -168,17 +177,28 @@ public class MainActivity extends AppCompatActivity {
         btnAddTile.setOnClickListener(v -> handleAddQuickTile());
 
         btnSaveHost.setOnClickListener(v -> {
+            String newLabel = etProviderLabel.getText() != null ? etProviderLabel.getText().toString().trim() : "";
             String newHost = etHostname.getText() != null ? etHostname.getText().toString().trim() : "";
+
+            if (TextUtils.isEmpty(newLabel)) {
+                tilProviderLabel.setError(getString(R.string.label_invalid_toast));
+                return;
+            }
+            tilProviderLabel.setError(null);
+
             if (TextUtils.isEmpty(newHost) || !newHost.contains(".")) {
                 tilHostname.setError(getString(R.string.host_invalid_toast));
                 return;
             }
             tilHostname.setError(null);
-            dnsManager.saveHostname(newHost);
+
+            dnsManager.saveProvider(newLabel, newHost);
 
             // If hostname mode is currently active, apply the new specifier immediately
             if (DnsManager.MODE_HOSTNAME.equalsIgnoreCase(dnsManager.getPrivateDnsMode()) && dnsManager.hasPermission()) {
                 dnsManager.applyDnsMode(DnsManager.MODE_HOSTNAME, newHost);
+            } else {
+                dnsManager.requestTileUpdate();
             }
 
             Toast.makeText(this, R.string.host_saved_toast, Toast.LENGTH_SHORT).show();
@@ -187,20 +207,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupPresets() {
-        chipAdGuard.setOnClickListener(v -> selectPreset("dns.adguard.com"));
-        chipCloudflare.setOnClickListener(v -> selectPreset("1dot1dot1dot1.cloudflare-dns.com"));
-        chipGoogle.setOnClickListener(v -> selectPreset("dns.google"));
-        chipQuad9.setOnClickListener(v -> selectPreset("dns.quad9.net"));
-        chipMullvad.setOnClickListener(v -> selectPreset("base.dns.mullvad.net"));
+        chipAdGuard.setOnClickListener(v -> selectPreset("AdGuard", "dns.adguard.com"));
+        chipCloudflare.setOnClickListener(v -> selectPreset("Cloudflare", "1dot1dot1dot1.cloudflare-dns.com"));
+        chipGoogle.setOnClickListener(v -> selectPreset("Google DNS", "dns.google"));
+        chipQuad9.setOnClickListener(v -> selectPreset("Quad9", "dns.quad9.net"));
+        chipMullvad.setOnClickListener(v -> selectPreset("Mullvad", "base.dns.mullvad.net"));
     }
 
-    private void selectPreset(String hostname) {
+    private void selectPreset(String label, String hostname) {
+        etProviderLabel.setText(label);
         etHostname.setText(hostname);
-        dnsManager.saveHostname(hostname);
+        dnsManager.saveProvider(label, hostname);
         if (DnsManager.MODE_HOSTNAME.equalsIgnoreCase(dnsManager.getPrivateDnsMode()) && dnsManager.hasPermission()) {
             dnsManager.applyDnsMode(DnsManager.MODE_HOSTNAME, hostname);
+        } else {
+            dnsManager.requestTileUpdate();
         }
-        Toast.makeText(this, getString(R.string.host_label, hostname), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, label + ": " + hostname, Toast.LENGTH_SHORT).show();
         refreshUI();
     }
 
@@ -261,17 +284,40 @@ public class MainActivity extends AppCompatActivity {
         String currentSpecifier = dnsManager.getPrivateDnsSpecifier();
         boolean isActive = dnsManager.isPrivateDnsActive();
 
-        // Status Card
+        // 1. Permission Card: Shown at TOP only if permission is NOT granted
+        if (hasPerm) {
+            cardPermission.setVisibility(View.GONE);
+        } else {
+            cardPermission.setVisibility(View.VISIBLE);
+            ivPermIcon.setImageResource(R.drawable.ic_warning);
+            tvPermTitle.setText(R.string.permission_missing);
+            tvPermTitle.setTextColor(Color.parseColor("#C62828"));
+            tvPermDesc.setText(R.string.permission_missing_desc);
+            layoutAdbCommand.setVisibility(View.VISIBLE);
+            btnRefreshPerm.setVisibility(View.VISIBLE);
+
+            // Show root option ONLY if device has su/root available
+            boolean rootAvailable = DnsManager.isRootAvailable();
+            btnGrantRoot.setVisibility(rootAvailable ? View.VISIBLE : View.GONE);
+        }
+
+        // 2. Status Card
         if (isActive) {
             tvStatusBadge.setText(R.string.status_active);
             setBadgeColor(tvStatusBadge, Color.parseColor("#2E7D32")); // Green
             if (DnsManager.MODE_HOSTNAME.equalsIgnoreCase(mode)) {
                 tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_mode_hostname)));
+
+                String label = dnsManager.getSavedLabel();
+                tvCurrentLabel.setText(getString(R.string.label_display, label));
+                tvCurrentLabel.setVisibility(View.VISIBLE);
+
                 String host = !TextUtils.isEmpty(currentSpecifier) ? currentSpecifier : dnsManager.getSavedHostname();
-                tvCurrentHost.setText(getString(R.string.host_label, host));
+                tvCurrentHost.setText(getString(R.string.hostname_display, host));
                 tvCurrentHost.setVisibility(View.VISIBLE);
             } else {
                 tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_mode_auto)));
+                tvCurrentLabel.setVisibility(View.GONE);
                 tvCurrentHost.setVisibility(View.GONE);
             }
             btnToggleDns.setText("Turn OFF Private DNS");
@@ -280,29 +326,13 @@ public class MainActivity extends AppCompatActivity {
             tvStatusBadge.setText(R.string.status_inactive);
             setBadgeColor(tvStatusBadge, Color.parseColor("#757575")); // Gray
             tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_status_off)));
+            tvCurrentLabel.setVisibility(View.GONE);
             tvCurrentHost.setVisibility(View.GONE);
             btnToggleDns.setText("Turn ON Private DNS");
             btnToggleDns.setIconResource(R.drawable.ic_dns_tile_off);
         }
 
         btnToggleDns.setEnabled(hasPerm);
-
-        // Permission Card
-        if (hasPerm) {
-            ivPermIcon.setImageResource(R.drawable.ic_check_circle);
-            tvPermTitle.setText(R.string.permission_granted);
-            tvPermTitle.setTextColor(Color.parseColor("#2E7D32"));
-            tvPermDesc.setText(R.string.permission_granted_desc);
-            layoutAdbCommand.setVisibility(View.GONE);
-            btnRefreshPerm.setVisibility(View.GONE);
-        } else {
-            ivPermIcon.setImageResource(R.drawable.ic_warning);
-            tvPermTitle.setText(R.string.permission_missing);
-            tvPermTitle.setTextColor(Color.parseColor("#C62828"));
-            tvPermDesc.setText(R.string.permission_missing_desc);
-            layoutAdbCommand.setVisibility(View.VISIBLE);
-            btnRefreshPerm.setVisibility(View.VISIBLE);
-        }
     }
 
     private void setBadgeColor(TextView badge, int color) {
