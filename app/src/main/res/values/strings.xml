@@ -33,27 +33,45 @@
     <string name="tile_added_success">Private DNS tile added to Quick Settings!</string>
     <string name="tile_already_added">Private DNS tile is already in your Quick Settings.</string>
 
-    <string name="config_title">DNS Provider Configuration</string>
-    <string name="preset_intro">Select a popular DNS provider preset or enter a custom one:</string>
-    <string name="preset_adguard">AdGuard (Adblock)</string>
-    <string name="preset_cloudflare">Cloudflare (1.1.1.1)</string>
-    <string name="preset_google">Google DNS</string>
-    <string name="preset_quad9">Quad9 (Security)</string>
-    <string name="preset_mullvad">Mullvad (Privacy)</string>
-    <string name="provider_label_hint">Tile Label (e.g. AdGuard, NextDNS)</string>
-    <string name="provider_label_helper">This name will appear on your Quick Settings tile when active</string>
-    <string name="custom_host_hint">DNS Hostname (e.g. dns.adguard.com)</string>
-    <string name="btn_save_host">Save Provider</string>
-    <string name="host_saved_toast">Provider configuration saved!</string>
-    <string name="host_invalid_toast">Please enter a valid DNS hostname.</string>
-    <string name="label_invalid_toast">Please enter a label for the tile.</string>
-    <string name="label_display">Tile Label: %1$s</string>
-    <string name="hostname_display">Hostname: %1$s</string>
+    <string name="dns_providers_title">DNS Providers</string>
+    <string name="dns_providers_subtitle">Tap a provider to select. Built-in presets are protected.</string>
+    <string name="btn_add_dns">Add DNS</string>
+    <string name="preset_badge">Preset</string>
 
-    <string name="behavior_title">Toggle Behavior</string>
+    <string name="dialog_add_dns_title">Add DNS Provider</string>
+    <string name="dialog_edit_dns_title">Edit DNS Provider</string>
+    <string name="dialog_delete_dns_title">Delete DNS Provider</string>
+    <string name="dialog_delete_dns_msg">Are you sure you want to delete \"%1$s\"?</string>
+
+    <string name="provider_name_hint">Provider Name / Label</string>
+    <string name="provider_name_helper">Friendly name shown on Quick Settings tile</string>
+    <string name="provider_hostname_hint">DNS Hostname (e.g. dns.adguard.com)</string>
+
+    <string name="err_label_empty">Provider name cannot be empty</string>
+    <string name="err_label_exists">A provider with this name already exists</string>
+    <string name="err_host_empty">Hostname cannot be empty</string>
+    <string name="err_host_invalid">Please enter a valid hostname (e.g. dns.example.com)</string>
+    <string name="err_host_exists">A provider with this hostname already exists</string>
+
+    <string name="action_save">Save</string>
+    <string name="action_add">Add</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+
+    <string name="menu_toggle_behavior">Toggle Behavior</string>
+    <string name="menu_add_tile">Add to Quick Settings</string>
+
+    <string name="dialog_toggle_behavior_title">Select Toggle Behavior</string>
     <string name="behavior_hostname_off">Provider ↔ Off (Recommended)</string>
     <string name="behavior_auto_off">Automatic ↔ Off</string>
     <string name="behavior_cycle_all">Cycle (Provider → Auto → Off)</string>
 
+    <string name="dns_added_toast">DNS Provider \"%1$s\" added</string>
+    <string name="dns_updated_toast">DNS Provider \"%1$s\" updated</string>
+    <string name="dns_deleted_toast">DNS Provider deleted</string>
+    <string name="dns_selected_toast">Switched to %1$s (%2$s)</string>
+
+    <string name="label_display">Tile Label: %1$s</string>
+    <string name="hostname_display">Hostname: %1$s</string>
     <string name="adb_command_text">adb shell pm grant com.antigravity.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS</string>
 </resources>

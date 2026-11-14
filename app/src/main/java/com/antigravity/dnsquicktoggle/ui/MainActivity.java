@@ -16,30 +16,35 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.antigravity.dnsquicktoggle.R;
+import com.antigravity.dnsquicktoggle.model.DnsProvider;
 import com.antigravity.dnsquicktoggle.service.DnsTileService;
 import com.antigravity.dnsquicktoggle.util.DnsManager;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DnsProviderAdapter.OnProviderActionListener {
 
     private DnsManager dnsManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -47,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     private ContentObserver contentObserver;
 
     // UI references
+    private MaterialToolbar topAppBar;
+
+    // Permission Card
     private MaterialCardView cardPermission;
     private ImageView ivPermIcon;
     private TextView tvPermTitle;
@@ -57,28 +65,17 @@ public class MainActivity extends AppCompatActivity {
     private MaterialButton btnGrantRoot;
     private MaterialButton btnRefreshPerm;
 
+    // Status Card
     private TextView tvStatusBadge;
     private TextView tvCurrentMode;
     private TextView tvCurrentLabel;
     private TextView tvCurrentHost;
     private MaterialButton btnToggleDns;
 
-    private MaterialButton btnAddTile;
-
-    private ChipGroup chipGroupPresets;
-    private Chip chipAdGuard;
-    private Chip chipCloudflare;
-    private Chip chipGoogle;
-    private Chip chipQuad9;
-    private Chip chipMullvad;
-
-    private TextInputLayout tilProviderLabel;
-    private TextInputEditText etProviderLabel;
-    private TextInputLayout tilHostname;
-    private TextInputEditText etHostname;
-    private MaterialButton btnSaveHost;
-
-    private RadioGroup rgBehavior;
+    // DNS Providers List
+    private MaterialButton btnAddDns;
+    private RecyclerView rvDnsProviders;
+    private DnsProviderAdapter providerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,12 +85,14 @@ public class MainActivity extends AppCompatActivity {
         dnsManager = new DnsManager(this);
 
         initViews();
+        setupToolbar();
+        setupRecyclerView();
         setupListeners();
-        setupPresets();
-        setupToggleBehaviors();
     }
 
     private void initViews() {
+        topAppBar = findViewById(R.id.topAppBar);
+
         cardPermission = findViewById(R.id.cardPermission);
         ivPermIcon = findViewById(R.id.ivPermIcon);
         tvPermTitle = findViewById(R.id.tvPermTitle);
@@ -110,26 +109,28 @@ public class MainActivity extends AppCompatActivity {
         tvCurrentHost = findViewById(R.id.tvCurrentHost);
         btnToggleDns = findViewById(R.id.btnToggleDns);
 
-        btnAddTile = findViewById(R.id.btnAddTile);
+        btnAddDns = findViewById(R.id.btnAddDns);
+        rvDnsProviders = findViewById(R.id.rvDnsProviders);
+    }
 
-        chipGroupPresets = findViewById(R.id.chipGroupPresets);
-        chipAdGuard = findViewById(R.id.chipAdGuard);
-        chipCloudflare = findViewById(R.id.chipCloudflare);
-        chipGoogle = findViewById(R.id.chipGoogle);
-        chipQuad9 = findViewById(R.id.chipQuad9);
-        chipMullvad = findViewById(R.id.chipMullvad);
+    private void setupToolbar() {
+        topAppBar.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_toggle_behavior) {
+                showToggleBehaviorDialog();
+                return true;
+            } else if (itemId == R.id.action_add_tile) {
+                handleAddQuickTile();
+                return true;
+            }
+            return false;
+        });
+    }
 
-        tilProviderLabel = findViewById(R.id.tilProviderLabel);
-        etProviderLabel = findViewById(R.id.etProviderLabel);
-        tilHostname = findViewById(R.id.tilHostname);
-        etHostname = findViewById(R.id.etHostname);
-        btnSaveHost = findViewById(R.id.btnSaveHost);
-
-        rgBehavior = findViewById(R.id.rgBehavior);
-
-        // Prepopulate saved label and hostname
-        etProviderLabel.setText(dnsManager.getSavedLabel());
-        etHostname.setText(dnsManager.getSavedHostname());
+    private void setupRecyclerView() {
+        providerAdapter = new DnsProviderAdapter(this);
+        rvDnsProviders.setLayoutManager(new LinearLayoutManager(this));
+        rvDnsProviders.setAdapter(providerAdapter);
     }
 
     private void setupListeners() {
@@ -142,6 +143,8 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, result.message, Toast.LENGTH_SHORT).show();
             refreshUI();
         });
+
+        btnAddDns.setOnClickListener(v -> showAddDnsDialog());
 
         btnCopyAdb.setOnClickListener(v -> {
             String command = tvAdbCommand.getText().toString();
@@ -173,84 +176,218 @@ public class MainActivity extends AppCompatActivity {
             refreshUI();
             Toast.makeText(this, dnsManager.hasPermission() ? R.string.permission_granted : R.string.permission_missing, Toast.LENGTH_SHORT).show();
         });
-
-        btnAddTile.setOnClickListener(v -> handleAddQuickTile());
-
-        btnSaveHost.setOnClickListener(v -> {
-            String newLabel = etProviderLabel.getText() != null ? etProviderLabel.getText().toString().trim() : "";
-            String newHost = etHostname.getText() != null ? etHostname.getText().toString().trim() : "";
-
-            if (TextUtils.isEmpty(newLabel)) {
-                tilProviderLabel.setError(getString(R.string.label_invalid_toast));
-                return;
-            }
-            tilProviderLabel.setError(null);
-
-            if (TextUtils.isEmpty(newHost) || !newHost.contains(".")) {
-                tilHostname.setError(getString(R.string.host_invalid_toast));
-                return;
-            }
-            tilHostname.setError(null);
-
-            dnsManager.saveProvider(newLabel, newHost);
-
-            // If hostname mode is currently active, apply the new specifier immediately
-            if (DnsManager.MODE_HOSTNAME.equalsIgnoreCase(dnsManager.getPrivateDnsMode()) && dnsManager.hasPermission()) {
-                dnsManager.applyDnsMode(DnsManager.MODE_HOSTNAME, newHost);
-            } else {
-                dnsManager.requestTileUpdate();
-            }
-
-            Toast.makeText(this, R.string.host_saved_toast, Toast.LENGTH_SHORT).show();
-            refreshUI();
-        });
     }
 
-    private void setupPresets() {
-        chipAdGuard.setOnClickListener(v -> selectPreset("AdGuard", "dns.adguard.com"));
-        chipCloudflare.setOnClickListener(v -> selectPreset("Cloudflare", "1dot1dot1dot1.cloudflare-dns.com"));
-        chipGoogle.setOnClickListener(v -> selectPreset("Google DNS", "dns.google"));
-        chipQuad9.setOnClickListener(v -> selectPreset("Quad9", "dns.quad9.net"));
-        chipMullvad.setOnClickListener(v -> selectPreset("Mullvad", "base.dns.mullvad.net"));
-    }
+    // --- Provider Actions ---
 
-    private void selectPreset(String label, String hostname) {
-        etProviderLabel.setText(label);
-        etHostname.setText(hostname);
-        dnsManager.saveProvider(label, hostname);
-        if (DnsManager.MODE_HOSTNAME.equalsIgnoreCase(dnsManager.getPrivateDnsMode()) && dnsManager.hasPermission()) {
-            dnsManager.applyDnsMode(DnsManager.MODE_HOSTNAME, hostname);
-        } else {
-            dnsManager.requestTileUpdate();
-        }
-        Toast.makeText(this, label + ": " + hostname, Toast.LENGTH_SHORT).show();
+    @Override
+    public void onSelectProvider(@NonNull DnsProvider provider) {
+        dnsManager.selectProvider(provider);
+        Toast.makeText(this, getString(R.string.dns_selected_toast, provider.getName(), provider.getHostname()), Toast.LENGTH_SHORT).show();
         refreshUI();
     }
 
-    private void setupToggleBehaviors() {
-        int behavior = dnsManager.getToggleBehavior();
-        switch (behavior) {
-            case DnsManager.BEHAVIOR_AUTO_OFF:
-                rgBehavior.check(R.id.rbAutoOff);
-                break;
-            case DnsManager.BEHAVIOR_CYCLE_ALL:
-                rgBehavior.check(R.id.rbCycleAll);
-                break;
-            case DnsManager.BEHAVIOR_HOSTNAME_OFF:
-            default:
-                rgBehavior.check(R.id.rbHostnameOff);
-                break;
+    @Override
+    public void onEditProvider(@NonNull DnsProvider provider) {
+        showEditDnsDialog(provider);
+    }
+
+    @Override
+    public void onDeleteProvider(@NonNull DnsProvider provider) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.dialog_delete_dns_title)
+                .setMessage(getString(R.string.dialog_delete_dns_msg, provider.getName()))
+                .setPositiveButton(R.string.action_delete, (dialog, which) -> {
+                    dnsManager.deleteCustomProvider(provider.getId());
+                    Toast.makeText(this, R.string.dns_deleted_toast, Toast.LENGTH_SHORT).show();
+                    refreshUI();
+                })
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    private void showAddDnsDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_dns, null);
+        TextInputLayout tilName = dialogView.findViewById(R.id.dialogTilName);
+        TextInputEditText etName = dialogView.findViewById(R.id.dialogEtName);
+        TextInputLayout tilHost = dialogView.findViewById(R.id.dialogTilHostname);
+        TextInputEditText etHost = dialogView.findViewById(R.id.dialogEtHostname);
+
+        // Clear error as soon as user types
+        setupErrorClearingWatcher(etName, tilName);
+        setupErrorClearingWatcher(etHost, tilHost);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.dialog_add_dns_title)
+                .setView(dialogView)
+                .setPositiveButton(R.string.action_add, null)
+                .setNegativeButton(R.string.action_cancel, null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveBtn.setOnClickListener(v -> {
+                String name = etName.getText() != null ? etName.getText().toString().trim() : "";
+                String rawHost = etHost.getText() != null ? etHost.getText().toString().trim() : "";
+                String cleanHost = DnsManager.sanitizeHostname(rawHost);
+
+                boolean hasError = false;
+
+                // 1. Validate label / name
+                if (TextUtils.isEmpty(name)) {
+                    tilName.setError(getString(R.string.err_label_empty));
+                    hasError = true;
+                } else if (dnsManager.isLabelExists(name, null)) {
+                    tilName.setError(getString(R.string.err_label_exists));
+                    hasError = true;
+                } else {
+                    tilName.setError(null);
+                }
+
+                // 2. Validate hostname
+                if (TextUtils.isEmpty(rawHost)) {
+                    tilHost.setError(getString(R.string.err_host_empty));
+                    hasError = true;
+                } else if (!DnsManager.isValidHostname(cleanHost)) {
+                    tilHost.setError(getString(R.string.err_host_invalid));
+                    hasError = true;
+                } else if (dnsManager.isHostnameExists(cleanHost, null)) {
+                    tilHost.setError(getString(R.string.err_host_exists));
+                    hasError = true;
+                } else {
+                    tilHost.setError(null);
+                }
+
+                if (hasError) {
+                    return; // Keep dialog open so user can fix
+                }
+
+                DnsProvider created = dnsManager.addCustomProvider(name, cleanHost);
+                dnsManager.selectProvider(created);
+                Toast.makeText(this, getString(R.string.dns_added_toast, name), Toast.LENGTH_SHORT).show();
+                refreshUI();
+                dialog.dismiss();
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void showEditDnsDialog(@NonNull DnsProvider provider) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_dns, null);
+        TextInputLayout tilName = dialogView.findViewById(R.id.dialogTilName);
+        TextInputEditText etName = dialogView.findViewById(R.id.dialogEtName);
+        TextInputLayout tilHost = dialogView.findViewById(R.id.dialogTilHostname);
+        TextInputEditText etHost = dialogView.findViewById(R.id.dialogEtHostname);
+
+        etName.setText(provider.getName());
+        etHost.setText(provider.getHostname());
+
+        setupErrorClearingWatcher(etName, tilName);
+        setupErrorClearingWatcher(etHost, tilHost);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.dialog_edit_dns_title)
+                .setView(dialogView)
+                .setPositiveButton(R.string.action_save, null)
+                .setNegativeButton(R.string.action_cancel, null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveBtn.setOnClickListener(v -> {
+                String name = etName.getText() != null ? etName.getText().toString().trim() : "";
+                String rawHost = etHost.getText() != null ? etHost.getText().toString().trim() : "";
+                String cleanHost = DnsManager.sanitizeHostname(rawHost);
+
+                boolean hasError = false;
+
+                // 1. Validate label (exclude current provider ID)
+                if (TextUtils.isEmpty(name)) {
+                    tilName.setError(getString(R.string.err_label_empty));
+                    hasError = true;
+                } else if (dnsManager.isLabelExists(name, provider.getId())) {
+                    tilName.setError(getString(R.string.err_label_exists));
+                    hasError = true;
+                } else {
+                    tilName.setError(null);
+                }
+
+                // 2. Validate hostname (exclude current provider ID)
+                if (TextUtils.isEmpty(rawHost)) {
+                    tilHost.setError(getString(R.string.err_host_empty));
+                    hasError = true;
+                } else if (!DnsManager.isValidHostname(cleanHost)) {
+                    tilHost.setError(getString(R.string.err_host_invalid));
+                    hasError = true;
+                } else if (dnsManager.isHostnameExists(cleanHost, provider.getId())) {
+                    tilHost.setError(getString(R.string.err_host_exists));
+                    hasError = true;
+                } else {
+                    tilHost.setError(null);
+                }
+
+                if (hasError) {
+                    return; // Keep dialog open so user can fix
+                }
+
+                dnsManager.updateCustomProvider(provider.getId(), name, cleanHost);
+                Toast.makeText(this, getString(R.string.dns_updated_toast, name), Toast.LENGTH_SHORT).show();
+                refreshUI();
+                dialog.dismiss();
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void setupErrorClearingWatcher(TextInputEditText editText, TextInputLayout inputLayout) {
+        editText.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (inputLayout.getError() != null) {
+                    inputLayout.setError(null);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+    }
+
+    private void showToggleBehaviorDialog() {
+        CharSequence[] options = new CharSequence[]{
+                getString(R.string.behavior_hostname_off),
+                getString(R.string.behavior_auto_off),
+                getString(R.string.behavior_cycle_all)
+        };
+
+        int currentBehavior = dnsManager.getToggleBehavior();
+        int checkedItem = 0;
+        if (currentBehavior == DnsManager.BEHAVIOR_AUTO_OFF) {
+            checkedItem = 1;
+        } else if (currentBehavior == DnsManager.BEHAVIOR_CYCLE_ALL) {
+            checkedItem = 2;
         }
 
-        rgBehavior.setOnCheckedChangeListener((group, checkedId) -> {
-            int selectedBehavior = DnsManager.BEHAVIOR_HOSTNAME_OFF;
-            if (checkedId == R.id.rbAutoOff) {
-                selectedBehavior = DnsManager.BEHAVIOR_AUTO_OFF;
-            } else if (checkedId == R.id.rbCycleAll) {
-                selectedBehavior = DnsManager.BEHAVIOR_CYCLE_ALL;
-            }
-            dnsManager.saveToggleBehavior(selectedBehavior);
-        });
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.dialog_toggle_behavior_title)
+                .setSingleChoiceItems(options, checkedItem, (dialog, which) -> {
+                    int selected = DnsManager.BEHAVIOR_HOSTNAME_OFF;
+                    if (which == 1) {
+                        selected = DnsManager.BEHAVIOR_AUTO_OFF;
+                    } else if (which == 2) {
+                        selected = DnsManager.BEHAVIOR_CYCLE_ALL;
+                    }
+                    dnsManager.saveToggleBehavior(selected);
+                    Toast.makeText(this, options[which], Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
     }
 
     private void handleAddQuickTile() {
@@ -274,8 +411,8 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        // Fallback for older versions: Toast guide
-        Toast.makeText(this, "Swipe down Quick Settings and tap Edit (pencil) to add 'Private DNS'.", Toast.LENGTH_LONG).show();
+        // Fallback for older versions
+        Toast.makeText(this, R.string.qs_tile_guide, Toast.LENGTH_LONG).show();
     }
 
     private void refreshUI() {
@@ -302,6 +439,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // 2. Status Card
+        String activeHostname = dnsManager.getSavedHostname();
         if (isActive) {
             tvStatusBadge.setText(R.string.status_active);
             setBadgeColor(tvStatusBadge, Color.parseColor("#2E7D32")); // Green
@@ -312,9 +450,10 @@ public class MainActivity extends AppCompatActivity {
                 tvCurrentLabel.setText(getString(R.string.label_display, label));
                 tvCurrentLabel.setVisibility(View.VISIBLE);
 
-                String host = !TextUtils.isEmpty(currentSpecifier) ? currentSpecifier : dnsManager.getSavedHostname();
+                String host = !TextUtils.isEmpty(currentSpecifier) ? currentSpecifier : activeHostname;
                 tvCurrentHost.setText(getString(R.string.hostname_display, host));
                 tvCurrentHost.setVisibility(View.VISIBLE);
+                activeHostname = host;
             } else {
                 tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_mode_auto)));
                 tvCurrentLabel.setVisibility(View.GONE);
@@ -333,6 +472,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnToggleDns.setEnabled(hasPerm);
+
+        // 3. DNS Providers List
+        providerAdapter.setProviders(dnsManager.getAllProviders(), activeHostname);
     }
 
     private void setBadgeColor(TextView badge, int color) {

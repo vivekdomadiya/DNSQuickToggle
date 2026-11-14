@@ -7,13 +7,14 @@ cd "$DIR"
 echo "=== DNS Quick Toggle Installer ==="
 
 # Check for APK
-APK_PATH="$DIR/app/build/outputs/apk/debug/app-debug.apk"
-if [ ! -f "$APK_PATH" ]; then
+APK_PATH=$(find "$DIR/app/build/outputs/apk/debug" -name "*.apk" 2>/dev/null | head -n 1)
+if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
     echo "[*] Building APK with Gradle..."
     ./gradlew assembleDebug
+    APK_PATH=$(find "$DIR/app/build/outputs/apk/debug" -name "*.apk" 2>/dev/null | head -n 1)
 fi
 
-if [ -f "$APK_PATH" ]; then
+if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
     echo "[+] APK built successfully: $APK_PATH"
 else
     echo "[-] Error: APK build failed."
@@ -26,9 +27,11 @@ PACKAGE_NAME="com.antigravity.dnsquicktoggle"
 if [ -d "/sdcard/Download" ] || [ -d "/storage/emulated/0/Download" ]; then
     DEST_DIR="/sdcard/Download"
     [ ! -d "$DEST_DIR" ] && DEST_DIR="/storage/emulated/0/Download"
+    APK_BASENAME=$(basename "$APK_PATH")
+    cp "$APK_PATH" "$DEST_DIR/$APK_BASENAME"
     cp "$APK_PATH" "$DEST_DIR/DNSQuickToggle.apk"
-    echo "[+] Copied APK to $DEST_DIR/DNSQuickToggle.apk"
-    echo "    You can open your Downloads folder and tap DNSQuickToggle.apk to install!"
+    echo "[+] Copied APK to $DEST_DIR/$APK_BASENAME and $DEST_DIR/DNSQuickToggle.apk"
+    echo "    You can open your Downloads folder and tap $APK_BASENAME to install!"
 fi
 
 # Try ADB if available

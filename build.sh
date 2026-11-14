@@ -7,7 +7,7 @@ cd "$DIR"
 echo "=== Building DNS Quick Toggle ==="
 ./gradlew assembleDebug
 
-APK="$DIR/app/build/outputs/apk/debug/app-debug.apk"
+APK=$(find "$DIR/app/build/outputs/apk/debug" -name "*.apk" | head -n 1)
 if [ -f "$APK" ]; then
     echo "=================================================="
     echo " BUILD SUCCESSFUL!"

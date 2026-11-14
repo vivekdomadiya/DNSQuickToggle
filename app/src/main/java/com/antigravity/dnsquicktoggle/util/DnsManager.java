@@ -14,11 +14,21 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.antigravity.dnsquicktoggle.model.DnsProvider;
 import com.antigravity.dnsquicktoggle.service.DnsTileService;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 public class DnsManager {
     private static final String TAG = "DnsManager";
@@ -37,6 +47,7 @@ public class DnsManager {
     public static final String PREF_CUSTOM_HOSTNAME = "custom_hostname";
     public static final String PREF_PROVIDER_LABEL = "provider_label";
     public static final String PREF_TOGGLE_BEHAVIOR = "toggle_behavior";
+    public static final String PREF_CUSTOM_PROVIDERS_JSON = "custom_providers_json";
 
     // Toggle behaviors
     public static final int BEHAVIOR_HOSTNAME_OFF = 0; // Hostname <-> Off
@@ -46,6 +57,15 @@ public class DnsManager {
     // Default Provider
     public static final String DEFAULT_HOSTNAME = "dns.adguard.com";
     public static final String DEFAULT_LABEL = "AdGuard";
+
+    // Built-in presets (not editable / not deletable)
+    public static final List<DnsProvider> PRESET_PROVIDERS = Collections.unmodifiableList(Arrays.asList(
+            new DnsProvider("preset_adguard", "AdGuard", "dns.adguard.com", true),
+            new DnsProvider("preset_cloudflare", "Cloudflare", "1dot1dot1dot1.cloudflare-dns.com", true),
+            new DnsProvider("preset_google", "Google DNS", "dns.google", true),
+            new DnsProvider("preset_quad9", "Quad9", "dns.quad9.net", true),
+            new DnsProvider("preset_mullvad", "Mullvad", "base.dns.mullvad.net", true)
+    ));
 
     private final Context appContext;
     private final SharedPreferences prefs;
@@ -132,10 +152,16 @@ public class DnsManager {
     @NonNull
     public String getSavedLabel() {
         String saved = prefs.getString(PREF_PROVIDER_LABEL, null);
-        if (TextUtils.isEmpty(saved)) {
-            return inferLabelFromHostname(getSavedHostname());
+        if (!TextUtils.isEmpty(saved)) {
+            return saved;
         }
-        return saved;
+        String currentHost = getSavedHostname();
+        for (DnsProvider p : getAllProviders()) {
+            if (p.getHostname().equalsIgnoreCase(currentHost)) {
+                return p.getName();
+            }
+        }
+        return inferLabelFromHostname(currentHost);
     }
 
     /**
@@ -153,6 +179,215 @@ public class DnsManager {
                 .putString(PREF_PROVIDER_LABEL, label.trim())
                 .putString(PREF_CUSTOM_HOSTNAME, hostname.trim())
                 .apply();
+    }
+
+    /**
+     * Retrieves all custom user-defined DNS providers.
+     */
+    @NonNull
+    public List<DnsProvider> getCustomProviders() {
+        List<DnsProvider> list = new ArrayList<>();
+        String jsonStr = prefs.getString(PREF_CUSTOM_PROVIDERS_JSON, null);
+        if (TextUtils.isEmpty(jsonStr)) {
+            return list;
+        }
+        try {
+            JSONArray array = new JSONArray(jsonStr);
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                DnsProvider provider = DnsProvider.fromJson(obj);
+                if (provider != null) {
+                    list.add(provider);
+                }
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing custom providers", e);
+        }
+        return list;
+    }
+
+    /**
+     * Persists the custom providers list.
+     */
+    public void saveCustomProviders(@NonNull List<DnsProvider> customProviders) {
+        JSONArray array = new JSONArray();
+        for (DnsProvider p : customProviders) {
+            try {
+                array.put(p.toJson());
+            } catch (JSONException e) {
+                Log.e(TAG, "Error serializing provider: " + p.getName(), e);
+            }
+        }
+        prefs.edit().putString(PREF_CUSTOM_PROVIDERS_JSON, array.toString()).apply();
+    }
+
+    /**
+     * Returns combined list of built-in presets and user custom providers.
+     */
+    @NonNull
+    public List<DnsProvider> getAllProviders() {
+        List<DnsProvider> all = new ArrayList<>(PRESET_PROVIDERS);
+        all.addAll(getCustomProviders());
+        return all;
+    }
+
+    /**
+     * Sanitizes hostname by stripping protocol prefix (http://, https://, tls://),
+     * paths, ports, and whitespace.
+     */
+    @NonNull
+    public static String sanitizeHostname(@Nullable String hostname) {
+        if (hostname == null) {
+            return "";
+        }
+        String clean = hostname.trim().toLowerCase();
+        if (clean.startsWith("https://")) clean = clean.substring(8);
+        else if (clean.startsWith("http://")) clean = clean.substring(7);
+        else if (clean.startsWith("tls://")) clean = clean.substring(6);
+
+        // Remove trailing slashes or path
+        int slashIdx = clean.indexOf('/');
+        if (slashIdx != -1) {
+            clean = clean.substring(0, slashIdx);
+        }
+        // Remove port if present
+        int colonIdx = clean.indexOf(':');
+        if (colonIdx != -1) {
+            clean = clean.substring(0, colonIdx);
+        }
+        return clean.trim();
+    }
+
+    /**
+     * Validates that a string is a syntactically valid DNS hostname.
+     */
+    public static boolean isValidHostname(@Nullable String hostname) {
+        if (hostname == null) return false;
+        String clean = sanitizeHostname(hostname);
+        if (clean.isEmpty() || clean.length() > 253) {
+            return false;
+        }
+        if (!clean.contains(".")) {
+            return false;
+        }
+        String regex = "^(?=.{1,253}$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))+$";
+        return clean.matches(regex);
+    }
+
+    /**
+     * Checks if a provider with the given label already exists (case-insensitive).
+     * @param label The label to check
+     * @param excludeId Optional provider ID to exclude (used when editing)
+     */
+    public boolean isLabelExists(@NonNull String label, @Nullable String excludeId) {
+        String trimmed = label.trim();
+        for (DnsProvider p : getAllProviders()) {
+            if (excludeId != null && excludeId.equals(p.getId())) {
+                continue;
+            }
+            if (p.getName().trim().equalsIgnoreCase(trimmed)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a provider with the given hostname already exists (case-insensitive).
+     * @param hostname The hostname to check
+     * @param excludeId Optional provider ID to exclude (used when editing)
+     */
+    public boolean isHostnameExists(@NonNull String hostname, @Nullable String excludeId) {
+        String clean = sanitizeHostname(hostname);
+        for (DnsProvider p : getAllProviders()) {
+            if (excludeId != null && excludeId.equals(p.getId())) {
+                continue;
+            }
+            if (sanitizeHostname(p.getHostname()).equalsIgnoreCase(clean)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adds a new custom provider.
+     */
+    @NonNull
+    public DnsProvider addCustomProvider(@NonNull String name, @NonNull String hostname) {
+        List<DnsProvider> customList = getCustomProviders();
+        String id = "custom_" + UUID.randomUUID().toString();
+        String cleanHost = sanitizeHostname(hostname);
+        DnsProvider newProvider = new DnsProvider(id, name.trim(), cleanHost, false);
+        customList.add(newProvider);
+        saveCustomProviders(customList);
+        return newProvider;
+    }
+
+    /**
+     * Updates an existing custom provider.
+     */
+    public boolean updateCustomProvider(@NonNull String id, @NonNull String newName, @NonNull String newHostname) {
+        List<DnsProvider> customList = getCustomProviders();
+        boolean found = false;
+        String oldHost = null;
+        String cleanHost = sanitizeHostname(newHostname);
+        for (DnsProvider p : customList) {
+            if (p.getId().equals(id)) {
+                oldHost = p.getHostname();
+                p.setName(newName.trim());
+                p.setHostname(cleanHost);
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            saveCustomProviders(customList);
+            if (oldHost != null && oldHost.equalsIgnoreCase(getSavedHostname())) {
+                saveProvider(newName, cleanHost);
+                if (MODE_HOSTNAME.equalsIgnoreCase(getPrivateDnsMode()) && hasPermission()) {
+                    applyDnsMode(MODE_HOSTNAME, cleanHost);
+                } else {
+                    requestTileUpdate();
+                }
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Deletes a custom provider by ID.
+     */
+    public boolean deleteCustomProvider(@NonNull String id) {
+        List<DnsProvider> customList = getCustomProviders();
+        DnsProvider removed = null;
+        for (int i = 0; i < customList.size(); i++) {
+            if (customList.get(i).getId().equals(id)) {
+                removed = customList.remove(i);
+                break;
+            }
+        }
+        if (removed != null) {
+            saveCustomProviders(customList);
+            if (removed.getHostname().equalsIgnoreCase(getSavedHostname())) {
+                DnsProvider defaultPreset = PRESET_PROVIDERS.get(0);
+                selectProvider(defaultPreset);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Selects a provider as the active target, saves it, and applies it immediately if hostname mode is active.
+     */
+    public void selectProvider(@NonNull DnsProvider provider) {
+        saveProvider(provider.getName(), provider.getHostname());
+        if (MODE_HOSTNAME.equalsIgnoreCase(getPrivateDnsMode()) && hasPermission()) {
+            applyDnsMode(MODE_HOSTNAME, provider.getHostname());
+        } else {
+            requestTileUpdate();
+        }
     }
 
     /**
