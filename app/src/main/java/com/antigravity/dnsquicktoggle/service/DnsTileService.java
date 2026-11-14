@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.antigravity.dnsquicktoggle.R;
+import com.antigravity.dnsquicktoggle.model.DnsProvider;
 import com.antigravity.dnsquicktoggle.ui.MainActivity;
 import com.antigravity.dnsquicktoggle.util.DnsManager;
 
@@ -27,6 +28,7 @@ public class DnsTileService extends TileService {
     private DnsManager dnsManager;
     private ContentObserver dnsSettingsObserver;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Toast currentToast;
 
     @Override
     public void onCreate() {
@@ -35,8 +37,30 @@ public class DnsTileService extends TileService {
     }
 
     @Override
+    public void onTileAdded() {
+        super.onTileAdded();
+        if (dnsManager == null) {
+            dnsManager = new DnsManager(this);
+        }
+        dnsManager.setTileAdded(true);
+    }
+
+    @Override
+    public void onTileRemoved() {
+        super.onTileRemoved();
+        if (dnsManager == null) {
+            dnsManager = new DnsManager(this);
+        }
+        dnsManager.setTileAdded(false);
+    }
+
+    @Override
     public void onStartListening() {
         super.onStartListening();
+        if (dnsManager == null) {
+            dnsManager = new DnsManager(this);
+        }
+        dnsManager.setTileAdded(true);
         updateTileState();
         registerSettingsObserver();
     }
@@ -56,7 +80,7 @@ public class DnsTileService extends TileService {
         }
 
         if (!dnsManager.hasPermission()) {
-            Toast.makeText(this, R.string.permission_required_toast, Toast.LENGTH_LONG).show();
+            showToast(getString(R.string.permission_required_toast));
             launchMainActivity();
             return;
         }
@@ -66,8 +90,16 @@ public class DnsTileService extends TileService {
         updateTileState();
 
         if (!TextUtils.isEmpty(result.message)) {
-            Toast.makeText(this, result.message, Toast.LENGTH_SHORT).show();
+            showToast(result.message);
         }
+    }
+
+    private void showToast(String message) {
+        if (currentToast != null) {
+            currentToast.cancel();
+        }
+        currentToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        currentToast.show();
     }
 
     /**
@@ -102,10 +134,13 @@ public class DnsTileService extends TileService {
                 if (TextUtils.isEmpty(host)) {
                     host = dnsManager.getSavedHostname();
                 }
-                // When ON, display the saved provider label on the quick tile
-                String label = dnsManager.getSavedLabel();
-                if (TextUtils.isEmpty(label)) {
-                    label = DnsManager.inferLabelFromHostname(host);
+                // If in our list: display friendly name. If NOT in our list: display hostname as label!
+                DnsProvider provider = dnsManager.findProviderByHostname(host);
+                String label;
+                if (provider != null) {
+                    label = provider.getName();
+                } else {
+                    label = !TextUtils.isEmpty(host) ? host : getString(R.string.tile_label);
                 }
                 tile.setLabel(label);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

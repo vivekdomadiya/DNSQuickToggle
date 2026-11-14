@@ -48,6 +48,7 @@ public class DnsManager {
     public static final String PREF_PROVIDER_LABEL = "provider_label";
     public static final String PREF_TOGGLE_BEHAVIOR = "toggle_behavior";
     public static final String PREF_CUSTOM_PROVIDERS_JSON = "custom_providers_json";
+    public static final String PREF_TILE_ADDED = "tile_added";
 
     // Toggle behaviors
     public static final int BEHAVIOR_HOSTNAME_OFF = 0; // Hostname <-> Off
@@ -147,21 +148,68 @@ public class DnsManager {
     }
 
     /**
+     * Finds a provider in preset or custom providers matching the given hostname.
+     */
+    @Nullable
+    public DnsProvider findProviderByHostname(@Nullable String hostname) {
+        if (TextUtils.isEmpty(hostname)) {
+            return null;
+        }
+        String clean = sanitizeHostname(hostname);
+        for (DnsProvider p : getAllProviders()) {
+            if (sanitizeHostname(p.getHostname()).equalsIgnoreCase(clean)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Gets the friendly label for the active/target DNS provider.
+     * If user changed DNS directly in settings and it's not in our list, returns the hostname.
      */
     @NonNull
     public String getSavedLabel() {
-        String saved = prefs.getString(PREF_PROVIDER_LABEL, null);
-        if (!TextUtils.isEmpty(saved)) {
-            return saved;
+        String activeHost = getPrivateDnsSpecifier();
+        if (TextUtils.isEmpty(activeHost)) {
+            activeHost = getSavedHostname();
         }
-        String currentHost = getSavedHostname();
-        for (DnsProvider p : getAllProviders()) {
-            if (p.getHostname().equalsIgnoreCase(currentHost)) {
-                return p.getName();
+
+        DnsProvider provider = findProviderByHostname(activeHost);
+        if (provider != null) {
+            return provider.getName();
+        }
+
+        // If not in our list, return the hostname itself as label
+        if (!TextUtils.isEmpty(activeHost)) {
+            return activeHost;
+        }
+
+        return DEFAULT_LABEL;
+    }
+
+    /**
+     * Checks if the Quick Settings tile is already added to user's Quick Settings shade.
+     */
+    public boolean isTilePresent() {
+        try {
+            String tiles = Settings.Secure.getString(appContext.getContentResolver(), "sysui_qs_tiles");
+            if (!TextUtils.isEmpty(tiles)) {
+                boolean contains = tiles.contains(appContext.getPackageName());
+                setTileAdded(contains);
+                return contains;
             }
+        } catch (Exception e) {
+            Log.d(TAG, "Cannot read sysui_qs_tiles: " + e.getMessage());
         }
-        return inferLabelFromHostname(currentHost);
+        return prefs.getBoolean(PREF_TILE_ADDED, false);
+    }
+
+    /**
+     * Saves whether the Quick Settings tile is added.
+     */
+    public void setTileAdded(boolean added) {
+        prefs.edit().putBoolean(PREF_TILE_ADDED, added).apply();
     }
 
     /**

@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private ContentObserver contentObserver;
+    private Toast currentToast;
 
     // UI references
     private MaterialToolbar topAppBar;
@@ -70,7 +72,12 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     private TextView tvCurrentMode;
     private TextView tvCurrentLabel;
     private TextView tvCurrentHost;
+    private MaterialButton btnStatusAddToList;
     private MaterialButton btnToggleDns;
+
+    // Quick Settings Tile Helper Card
+    private MaterialCardView cardQuickTile;
+    private MaterialButton btnAddTile;
 
     // DNS Providers List
     private MaterialButton btnAddDns;
@@ -90,6 +97,18 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
         setupListeners();
     }
 
+    private void showToast(@NonNull String message) {
+        if (currentToast != null) {
+            currentToast.cancel();
+        }
+        currentToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        currentToast.show();
+    }
+
+    private void showToast(int resId) {
+        showToast(getString(resId));
+    }
+
     private void initViews() {
         topAppBar = findViewById(R.id.topAppBar);
 
@@ -107,7 +126,11 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
         tvCurrentMode = findViewById(R.id.tvCurrentMode);
         tvCurrentLabel = findViewById(R.id.tvCurrentLabel);
         tvCurrentHost = findViewById(R.id.tvCurrentHost);
+        btnStatusAddToList = findViewById(R.id.btnStatusAddToList);
         btnToggleDns = findViewById(R.id.btnToggleDns);
+
+        cardQuickTile = findViewById(R.id.cardQuickTile);
+        btnAddTile = findViewById(R.id.btnAddTile);
 
         btnAddDns = findViewById(R.id.btnAddDns);
         rvDnsProviders = findViewById(R.id.rvDnsProviders);
@@ -115,12 +138,8 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
 
     private void setupToolbar() {
         topAppBar.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.action_toggle_behavior) {
+            if (item.getItemId() == R.id.action_toggle_behavior) {
                 showToggleBehaviorDialog();
-                return true;
-            } else if (itemId == R.id.action_add_tile) {
-                handleAddQuickTile();
                 return true;
             }
             return false;
@@ -136,15 +155,16 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     private void setupListeners() {
         btnToggleDns.setOnClickListener(v -> {
             if (!dnsManager.hasPermission()) {
-                Toast.makeText(this, R.string.permission_required_toast, Toast.LENGTH_SHORT).show();
+                showToast(R.string.permission_required_toast);
                 return;
             }
             DnsManager.ToggleResult result = dnsManager.toggle();
-            Toast.makeText(this, result.message, Toast.LENGTH_SHORT).show();
+            showToast(result.message);
             refreshUI();
         });
 
         btnAddDns.setOnClickListener(v -> showAddDnsDialog());
+        btnAddTile.setOnClickListener(v -> handleAddQuickTile());
 
         btnCopyAdb.setOnClickListener(v -> {
             String command = tvAdbCommand.getText().toString();
@@ -152,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
             ClipData clip = ClipData.newPlainText("ADB Command", command);
             if (clipboard != null) {
                 clipboard.setPrimaryClip(clip);
-                Toast.makeText(this, R.string.adb_copied_toast, Toast.LENGTH_SHORT).show();
+                showToast(R.string.adb_copied_toast);
             }
         });
 
@@ -163,9 +183,9 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
                 mainHandler.post(() -> {
                     btnGrantRoot.setEnabled(true);
                     if (granted) {
-                        Toast.makeText(this, R.string.root_success_toast, Toast.LENGTH_SHORT).show();
+                        showToast(R.string.root_success_toast);
                     } else {
-                        Toast.makeText(this, R.string.root_failed_toast, Toast.LENGTH_LONG).show();
+                        showToast(R.string.root_failed_toast);
                     }
                     refreshUI();
                 });
@@ -174,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
 
         btnRefreshPerm.setOnClickListener(v -> {
             refreshUI();
-            Toast.makeText(this, dnsManager.hasPermission() ? R.string.permission_granted : R.string.permission_missing, Toast.LENGTH_SHORT).show();
+            showToast(dnsManager.hasPermission() ? R.string.permission_granted : R.string.permission_missing);
         });
     }
 
@@ -183,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     @Override
     public void onSelectProvider(@NonNull DnsProvider provider) {
         dnsManager.selectProvider(provider);
-        Toast.makeText(this, getString(R.string.dns_selected_toast, provider.getName(), provider.getHostname()), Toast.LENGTH_SHORT).show();
+        showToast(getString(R.string.dns_selected_toast, provider.getName(), provider.getHostname()));
         refreshUI();
     }
 
@@ -199,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
                 .setMessage(getString(R.string.dialog_delete_dns_msg, provider.getName()))
                 .setPositiveButton(R.string.action_delete, (dialog, which) -> {
                     dnsManager.deleteCustomProvider(provider.getId());
-                    Toast.makeText(this, R.string.dns_deleted_toast, Toast.LENGTH_SHORT).show();
+                    showToast(R.string.dns_deleted_toast);
                     refreshUI();
                 })
                 .setNegativeButton(R.string.action_cancel, null)
@@ -207,11 +227,22 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     }
 
     private void showAddDnsDialog() {
+        showAddDnsDialog(null, null);
+    }
+
+    private void showAddDnsDialog(@Nullable String initialHost, @Nullable String initialName) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_dns, null);
         TextInputLayout tilName = dialogView.findViewById(R.id.dialogTilName);
         TextInputEditText etName = dialogView.findViewById(R.id.dialogEtName);
         TextInputLayout tilHost = dialogView.findViewById(R.id.dialogTilHostname);
         TextInputEditText etHost = dialogView.findViewById(R.id.dialogEtHostname);
+
+        if (!TextUtils.isEmpty(initialName)) {
+            etName.setText(initialName);
+        }
+        if (!TextUtils.isEmpty(initialHost)) {
+            etHost.setText(initialHost);
+        }
 
         // Clear error as soon as user types
         setupErrorClearingWatcher(etName, tilName);
@@ -264,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
 
                 DnsProvider created = dnsManager.addCustomProvider(name, cleanHost);
                 dnsManager.selectProvider(created);
-                Toast.makeText(this, getString(R.string.dns_added_toast, name), Toast.LENGTH_SHORT).show();
+                showToast(getString(R.string.dns_added_toast, name));
                 refreshUI();
                 dialog.dismiss();
             });
@@ -332,7 +363,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
                 }
 
                 dnsManager.updateCustomProvider(provider.getId(), name, cleanHost);
-                Toast.makeText(this, getString(R.string.dns_updated_toast, name), Toast.LENGTH_SHORT).show();
+                showToast(getString(R.string.dns_updated_toast, name));
                 refreshUI();
                 dialog.dismiss();
             });
@@ -383,7 +414,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
                         selected = DnsManager.BEHAVIOR_CYCLE_ALL;
                     }
                     dnsManager.saveToggleBehavior(selected);
-                    Toast.makeText(this, options[which], Toast.LENGTH_SHORT).show();
+                    showToast(options[which].toString());
                     dialog.dismiss();
                 })
                 .setNegativeButton(R.string.action_cancel, null)
@@ -402,9 +433,13 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
                         getMainExecutor(),
                         resultCode -> {
                             if (resultCode == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED) {
-                                Toast.makeText(this, R.string.tile_added_success, Toast.LENGTH_SHORT).show();
+                                dnsManager.setTileAdded(true);
+                                showToast(R.string.tile_added_success);
+                                refreshUI();
                             } else if (resultCode == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED) {
-                                Toast.makeText(this, R.string.tile_already_added, Toast.LENGTH_SHORT).show();
+                                dnsManager.setTileAdded(true);
+                                showToast(R.string.tile_already_added);
+                                refreshUI();
                             }
                         }
                 );
@@ -412,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
             }
         }
         // Fallback for older versions
-        Toast.makeText(this, R.string.qs_tile_guide, Toast.LENGTH_LONG).show();
+        showToast(R.string.qs_tile_guide);
     }
 
     private void refreshUI() {
@@ -446,18 +481,31 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
             if (DnsManager.MODE_HOSTNAME.equalsIgnoreCase(mode)) {
                 tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_mode_hostname)));
 
-                String label = dnsManager.getSavedLabel();
-                tvCurrentLabel.setText(getString(R.string.label_display, label));
-                tvCurrentLabel.setVisibility(View.VISIBLE);
-
                 String host = !TextUtils.isEmpty(currentSpecifier) ? currentSpecifier : activeHostname;
+                activeHostname = host;
+
+                DnsProvider provider = dnsManager.findProviderByHostname(host);
+                if (provider != null) {
+                    tvCurrentLabel.setText(getString(R.string.label_display, provider.getName()));
+                    tvCurrentLabel.setVisibility(View.VISIBLE);
+                    btnStatusAddToList.setVisibility(View.GONE);
+                } else {
+                    // Not in our list: show "Not in list" and provide button to add it
+                    tvCurrentLabel.setText(getString(R.string.label_display, getString(R.string.status_label_not_in_list)));
+                    tvCurrentLabel.setVisibility(View.VISIBLE);
+                    btnStatusAddToList.setVisibility(View.VISIBLE);
+                    final String hostToAdd = host;
+                    btnStatusAddToList.setOnClickListener(v -> 
+                            showAddDnsDialog(hostToAdd, DnsManager.inferLabelFromHostname(hostToAdd)));
+                }
+
                 tvCurrentHost.setText(getString(R.string.hostname_display, host));
                 tvCurrentHost.setVisibility(View.VISIBLE);
-                activeHostname = host;
             } else {
                 tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_mode_auto)));
                 tvCurrentLabel.setVisibility(View.GONE);
                 tvCurrentHost.setVisibility(View.GONE);
+                btnStatusAddToList.setVisibility(View.GONE);
             }
             btnToggleDns.setText("Turn OFF Private DNS");
             btnToggleDns.setIconResource(R.drawable.ic_dns_tile_on);
@@ -467,13 +515,18 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
             tvCurrentMode.setText(getString(R.string.mode_label, getString(R.string.dns_status_off)));
             tvCurrentLabel.setVisibility(View.GONE);
             tvCurrentHost.setVisibility(View.GONE);
+            btnStatusAddToList.setVisibility(View.GONE);
             btnToggleDns.setText("Turn ON Private DNS");
             btnToggleDns.setIconResource(R.drawable.ic_dns_tile_off);
         }
 
         btnToggleDns.setEnabled(hasPerm);
 
-        // 3. DNS Providers List
+        // 3. Quick Settings Tile Card (shown only if tile is NOT already present)
+        boolean tilePresent = dnsManager.isTilePresent();
+        cardQuickTile.setVisibility(tilePresent ? View.GONE : View.VISIBLE);
+
+        // 4. DNS Providers List
         providerAdapter.setProviders(dnsManager.getAllProviders(), activeHostname);
     }
 
