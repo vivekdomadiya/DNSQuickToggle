@@ -6,12 +6,25 @@ cd "$DIR"
 
 echo "=== DNS Quick Toggle Installer ==="
 
-# Check for APK
-APK_PATH=$(find "$DIR/app/build/outputs/apk/debug" -name "*.apk" 2>/dev/null | head -n 1)
+# Load local release keystore if available
+if [ -f "/root/.android/dnsquicktoggle-release.jks" ] && [ -f "/root/.android/keystore_credentials.env" ]; then
+    source /root/.android/keystore_credentials.env
+    export KEYSTORE_FILE="$KEYSTORE_PATH"
+    export KEYSTORE_PASSWORD="$STORE_PASS"
+    export KEY_ALIAS="$KEY_ALIAS"
+    export KEY_PASSWORD="$KEY_PASS"
+fi
+
+# Prefer release APK; fallback to debug
+APK_PATH=$(find "$DIR/app/build/outputs/apk/release" -name "*.apk" 2>/dev/null | head -n 1)
 if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
-    echo "[*] Building APK with Gradle..."
-    ./gradlew assembleDebug
     APK_PATH=$(find "$DIR/app/build/outputs/apk/debug" -name "*.apk" 2>/dev/null | head -n 1)
+fi
+
+if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+    echo "[*] Building Release APK with Gradle..."
+    ./gradlew assembleRelease
+    APK_PATH=$(find "$DIR/app/build/outputs/apk/release" -name "*.apk" 2>/dev/null | head -n 1)
 fi
 
 if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
@@ -28,8 +41,8 @@ if [ -d "/sdcard/Download" ] || [ -d "/storage/emulated/0/Download" ]; then
     DEST_DIR="/sdcard/Download"
     [ ! -d "$DEST_DIR" ] && DEST_DIR="/storage/emulated/0/Download"
     APK_BASENAME=$(basename "$APK_PATH")
-    # Clean up previous unversioned file if present
-    rm -f "$DEST_DIR/DNSQuickToggle.apk"
+    # Clean up previous APKs
+    rm -f "$DEST_DIR"/DNSQuickToggle*.apk
     cp "$APK_PATH" "$DEST_DIR/$APK_BASENAME"
     echo "[+] Copied APK to $DEST_DIR/$APK_BASENAME"
     echo "    You can open your Downloads folder and tap $APK_BASENAME to install!"
@@ -62,10 +75,9 @@ echo ""
 echo "=== Manual Setup Instructions ==="
 echo "1. Install the APK located at:"
 echo "   $APK_PATH"
-echo "   (or /sdcard/Download/DNSQuickToggle.apk)"
 echo ""
 echo "2. Grant WRITE_SECURE_SETTINGS permission using ADB on your computer:"
 echo "   adb shell pm grant $PACKAGE_NAME android.permission.WRITE_SECURE_SETTINGS"
 echo "   (Or tap 'Grant with Root' directly in the app if your device is rooted)"
 echo ""
-echo "3. Pull down your notification shade twice, tap edit, and add the 'Private DNS' tile!"
+echo "3. Pull down your notification shade twice, tap edit, and add the 'DNS Quick Toggle' tile!"
