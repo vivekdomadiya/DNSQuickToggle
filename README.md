@@ -15,7 +15,7 @@
   <a href="https://github.com/vivekdomadiya/DNSQuickToggle/releases">
     <img src="https://img.shields.io/github/downloads/vivekdomadiya/DNSQuickToggle/total?style=for-the-badge&color=10b981" alt="Total Downloads" />
   </a>
-  <img src="https://img.shields.io/badge/Android-9.0%2B%20(API%2028%2B)-34d399?style=for-the-badge&logo=android&logoColor=white" alt="Android 9+" />
+  <img src="https://img.shields.io/badge/Android-9.0%2B%20(API%2028%2B)-34d399?style=for-the-badge&logo=android&logoColor=white&color=f59e0b" alt="Android 9+" />
 </p>
 
 ---
@@ -37,9 +37,6 @@ Get the latest signed, installable APK directly from GitHub Releases:
     <img src="https://img.shields.io/badge/Download-Latest_APK-blue?style=for-the-badge&logo=android&logoColor=white" height="40" alt="Download APK" />
   </a>
 </p>
-
-- **Supported Android Versions:** Android 9.0 (Pie) up to Android 15+ (API 28 - 35)
-- **Root Status:** **Not required** (works on all non-rooted devices via a one-time ADB command).
 
 ---
 
