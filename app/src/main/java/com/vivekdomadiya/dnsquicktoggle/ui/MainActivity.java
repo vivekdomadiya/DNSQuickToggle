@@ -42,14 +42,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class MainActivity extends AppCompatActivity implements DnsProviderAdapter.OnProviderActionListener {
 
     private DnsManager dnsManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private ContentObserver contentObserver;
     private Toast currentToast;
 
@@ -64,7 +60,6 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
     private LinearLayout layoutAdbCommand;
     private TextView tvAdbCommand;
     private MaterialButton btnCopyAdb;
-    private MaterialButton btnGrantRoot;
     private MaterialButton btnRefreshPerm;
     private MaterialButton btnOpenGuide;
 
@@ -120,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
         layoutAdbCommand = findViewById(R.id.layoutAdbCommand);
         tvAdbCommand = findViewById(R.id.tvAdbCommand);
         btnCopyAdb = findViewById(R.id.btnCopyAdb);
-        btnGrantRoot = findViewById(R.id.btnGrantRoot);
         btnRefreshPerm = findViewById(R.id.btnRefreshPerm);
         btnOpenGuide = findViewById(R.id.btnOpenGuide);
 
@@ -177,22 +171,6 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
                 clipboard.setPrimaryClip(clip);
                 showToast(R.string.adb_copied_toast);
             }
-        });
-
-        btnGrantRoot.setOnClickListener(v -> {
-            btnGrantRoot.setEnabled(false);
-            executorService.execute(() -> {
-                boolean granted = dnsManager.grantPermissionWithRoot();
-                mainHandler.post(() -> {
-                    btnGrantRoot.setEnabled(true);
-                    if (granted) {
-                        showToast(R.string.root_success_toast);
-                    } else {
-                        showToast(R.string.root_failed_toast);
-                    }
-                    refreshUI();
-                });
-            });
         });
 
         btnRefreshPerm.setOnClickListener(v -> {
@@ -482,10 +460,6 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
             tvPermDesc.setText(R.string.permission_missing_desc);
             layoutAdbCommand.setVisibility(View.VISIBLE);
             btnRefreshPerm.setVisibility(View.VISIBLE);
-
-            // Show root option ONLY if device has su/root available
-            boolean rootAvailable = DnsManager.isRootAvailable();
-            btnGrantRoot.setVisibility(rootAvailable ? View.VISIBLE : View.GONE);
         }
 
         // 2. Status Card
@@ -598,11 +572,5 @@ public class MainActivity extends AppCompatActivity implements DnsProviderAdapte
             }
             contentObserver = null;
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        executorService.shutdown();
     }
 }

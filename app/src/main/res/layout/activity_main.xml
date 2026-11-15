@@ -105,33 +105,14 @@
                             android:textSize="12sp"
                             android:textIsSelectable="true" />
 
-                        <LinearLayout
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCopyAdb"
+                            style="@style/Widget.Material3.Button.TonalButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnCopyAdb"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/btn_copy_adb"
-                                app:icon="@drawable/ic_content_copy" />
-
-                            <!-- Shown ONLY if device has root (su) -->
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnGrantRoot"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginStart="8dp"
-                                android:visibility="gone"
-                                android:text="@string/btn_grant_root"
-                                tools:visibility="visible" />
-
-                        </LinearLayout>
+                            android:text="@string/btn_copy_adb"
+                            app:icon="@drawable/ic_content_copy" />
 
                     </LinearLayout>
 

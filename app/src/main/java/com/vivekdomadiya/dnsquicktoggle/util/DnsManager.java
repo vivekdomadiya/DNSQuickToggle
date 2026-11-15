@@ -21,9 +21,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -585,54 +582,6 @@ public class DnsManager {
         } catch (Exception e) {
             Log.d(TAG, "Could not request tile update: " + e.getMessage());
         }
-    }
-
-    /**
-     * Checks if the device has a su (root) binary accessible.
-     */
-    public static boolean isRootAvailable() {
-        String[] paths = {
-                "/system/bin/su",
-                "/system/xbin/su",
-                "/sbin/su",
-                "/system/sd/xbin/su",
-                "/system/bin/failsafe/su",
-                "/data/local/xbin/su",
-                "/data/local/bin/su",
-                "/data/local/su"
-        };
-        for (String path : paths) {
-            if (new File(path).exists()) {
-                return true;
-            }
-        }
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"which", "su"});
-            int exitCode = process.waitFor();
-            return exitCode == 0;
-        } catch (Exception ignored) {
-            return false;
-        }
-    }
-
-    /**
-     * Tries to grant WRITE_SECURE_SETTINGS using root su shell.
-     * @return true if permission was granted successfully.
-     */
-    public boolean grantPermissionWithRoot() {
-        String packageName = appContext.getPackageName();
-        String command = "pm grant " + packageName + " android.permission.WRITE_SECURE_SETTINGS";
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                requestTileUpdate();
-                return hasPermission();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error running su command", e);
-        }
-        return false;
     }
 
     public static class ToggleResult {
