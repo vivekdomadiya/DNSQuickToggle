@@ -38,7 +38,7 @@ Get the latest signed, installable APK directly from GitHub Releases:
   </a>
 </p>
 
-- **Supported Android Versions:** Android 9.0 (Pie) up to Android 15+ (API 28 - 35)
+- **Supported Android Versions:** Android 9.0 (Pie) up to Android 16+ (API 28 - 36)
 - **Root Status:** **Not required** (works on all non-rooted devices via a one-time ADB command).
 
 ---
