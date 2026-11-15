@@ -4,16 +4,15 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build & Publish Release
-    # Do not run on automated version bump commits to prevent infinite loops
+  master_pipeline:
+    name: Build & Release Pipeline
+    # If [skip ci] is present, skip CI entirely
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     permissions:
@@ -74,6 +73,7 @@ jobs:
           retention-days: 30
 
       - name: Publish GitHub Release (Native gh CLI)
+        if: "contains(github.event.head_commit.message, '[release]')"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -91,27 +91,7 @@ jobs:
           fi
 
       - name: Bump Version Code & Name via PR
+        if: "contains(github.event.head_commit.message, '[release]')"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 .github/scripts/bump-version.py --type patch
-
-          NEW_VERSION=$(grep "versionName" app/build.gradle | head -n 1 | awk -F "['\"]" '{print $2}')
-          NEW_VERSION_CODE=$(grep "versionCode" app/build.gradle | head -n 1 | awk '{print $2}')
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          BUMP_BRANCH="chore/bump-version-${NEW_VERSION}"
-          git checkout -b "$BUMP_BRANCH"
-          git add app/build.gradle
-          git commit -m "chore(release): bump version to ${NEW_VERSION} [skip ci]"
-          git push origin "$BUMP_BRANCH"
-
-          gh pr create \
-            --base master \
-            --head "$BUMP_BRANCH" \
-            --title "chore(release): bump version to ${NEW_VERSION} [skip ci]" \
-            --body "Automated version bump to ${NEW_VERSION} (code: ${NEW_VERSION_CODE}) after release."
-
-          gh pr merge "$BUMP_BRANCH" --squash --delete-branch
+        run: bash .github/scripts/bump-version-pr.sh patch
