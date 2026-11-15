@@ -76,6 +76,6 @@
     <string name="status_label_not_in_list">Not in list</string>
     <string name="btn_add_to_list">Add to DNS list</string>
     <string name="btn_open_guide">Setup Guide</string>
-    <string name="github_guide_url">https://github.com/vivekdomadiya/dns-quick-toggle#how-to-grant-permission</string>
+    <string name="github_guide_url">https://github.com/vivekdomadiya/DNSQuickToggle#how-to-grant-permission</string>
     <string name="adb_command_text">adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS</string>
 </resources>

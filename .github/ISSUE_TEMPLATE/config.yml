@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Questions & Setup Guide
-    url: https://github.com/vivekdomadiya/dns-quick-toggle#how-to-grant-permission
+    url: https://github.com/vivekdomadiya/DNSQuickToggle#how-to-grant-permission
     about: Please check the ADB permission setup guide before reporting permission issues.
