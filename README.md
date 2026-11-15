@@ -39,7 +39,7 @@ Get the latest signed, installable APK directly from GitHub Releases:
 </p>
 
 - **Supported Android Versions:** Android 9.0 (Pie) up to Android 15+ (API 28 - 35)
-- **Root Status:** **Not required** (works on all non-rooted devices via a one-time ADB command; supports 1-click grant for rooted devices).
+- **Root Status:** **Not required** (works on all non-rooted devices via a one-time ADB command).
 
 ---
 
@@ -75,7 +75,7 @@ Get the latest signed, installable APK directly from GitHub Releases:
 
 Android treats system-wide Private DNS configuration as a protected setting. To change it from a Quick Settings tile, Android requires the `WRITE_SECURE_SETTINGS` permission.
 
-### Method 1: Via ADB (Standard / No Root Required)
+### Granting via ADB (One-Time Setup)
 
 You only need to perform this **once** after installing the app. It does not require root and takes less than 2 minutes:
 
@@ -95,16 +95,9 @@ You only need to perform this **once** after installing the app. It does not req
    adb shell pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS
    ```
 
+   *(Rooted users can also simply execute `su -c pm grant com.vivekdomadiya.dnsquicktoggle android.permission.WRITE_SECURE_SETTINGS` in Termux or an Android terminal app).*
+
 5. **Done!** Open DNS Quick Toggle on your phone; the permission warning will disappear and the tile is fully active!
-
----
-
-### Method 2: In-App 1-Click Grant (Rooted Phones Only)
-
-If your device is rooted with Magisk, KernelSU, or APatch:
-1. Open **DNS Quick Toggle**.
-2. Tap **Grant with Root (su)** on the permission card.
-3. Tap **Grant** on the root request popup.
 
 ---
 

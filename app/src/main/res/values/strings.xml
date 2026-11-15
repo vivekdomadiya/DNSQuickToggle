@@ -17,14 +17,11 @@
     <string name="permission_granted">WRITE_SECURE_SETTINGS Granted</string>
     <string name="permission_granted_desc">All permissions are active. The Quick Settings tile can switch DNS modes instantly.</string>
     <string name="permission_missing">Permission Required</string>
-    <string name="permission_missing_desc">Android requires WRITE_SECURE_SETTINGS to change system Private DNS. Grant it via Root or ADB below.</string>
+    <string name="permission_missing_desc">Android requires WRITE_SECURE_SETTINGS to change system Private DNS. Grant it via ADB below.</string>
     <string name="permission_required_toast">WRITE_SECURE_SETTINGS permission required</string>
     
-    <string name="btn_grant_root">Grant with Root (su)</string>
     <string name="btn_copy_adb">Copy ADB Command</string>
     <string name="btn_refresh_perm">Refresh Status</string>
-    <string name="root_success_toast">Permission granted successfully via Root!</string>
-    <string name="root_failed_toast">Root grant failed or su not available.</string>
     <string name="adb_copied_toast">ADB command copied to clipboard!</string>
 
     <string name="qs_tile_card_title">Quick Settings Tile</string>
