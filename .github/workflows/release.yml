@@ -49,7 +49,6 @@ jobs:
           echo "Release Tag: ${TAG} (Version: ${VERSION})"
 
       - name: Set up Release Keystore
-        if: "${{ secrets.KEYSTORE_BASE64 != '' }}"
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
