@@ -39,7 +39,6 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Determine Version & Tag
-        if: "contains(github.event.head_commit.message, '[release]')"
         id: version_info
         run: |
           VERSION=$(grep "versionName" app/build.gradle | head -n 1 | awk -F "['\"]" '{print $2}')
@@ -49,14 +48,12 @@ jobs:
           echo "Release Tag: ${TAG} (Version: ${VERSION})"
 
       - name: Set up Release Keystore
-        if: "contains(github.event.head_commit.message, '[release]')"
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release.jks
 
       - name: Build Release APK
-        if: "contains(github.event.head_commit.message, '[release]')"
         env:
           KEYSTORE_FILE: /tmp/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -69,7 +66,6 @@ jobs:
         run: rm -f /tmp/release.jks
 
       - name: Upload Release APK Artifact
-        if: "contains(github.event.head_commit.message, '[release]')"
         uses: actions/upload-artifact@v4
         with:
           name: DNSQuickToggle-${{ steps.version_info.outputs.version }}-Release-APK
@@ -99,9 +95,3 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/bump-version-pr.sh patch
-
-      - name: Build Only Check
-        if: "!contains(github.event.head_commit.message, '[release]')"
-        run: |
-          echo "==> Normal commit without [release]: running build check..."
-          ./gradlew assembleDebug --stacktrace
