@@ -10,3 +10,14 @@ local.properties
 /captures
 .externalNativeBuild
 .cxx
+
+# Signing & Keystores (Strictly Ignored)
+*.jks
+*.keystore
+*.key
+keystore/
+signing/
+release.properties
+signing.properties
+*.env
+bump_version.env
