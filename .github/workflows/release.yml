@@ -38,9 +38,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # -----------------------------------------------------------------
-      # CASE 1: [release] keyword present -> Build signed release & publish
-      # -----------------------------------------------------------------
       - name: Determine Version & Tag
         if: "contains(github.event.head_commit.message, '[release]')"
         id: version_info
@@ -103,9 +100,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/bump-version-pr.sh patch
 
-      # -----------------------------------------------------------------
-      # CASE 2: Normal commit (no [release], no [skip ci]) -> Build only
-      # -----------------------------------------------------------------
       - name: Build Only Check
         if: "!contains(github.event.head_commit.message, '[release]')"
         run: |
